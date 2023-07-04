@@ -16,11 +16,21 @@ To share the data you then need to purchase a licence.
 
 All you should have to run to build and populate the database is:
 
-1. Create a `config.sh` file based on the contents of `config.sh.tpl`
-2. Create a database of the specified name (possibly as the postgres user)
-3. Run `./setup.sh` if this is the first time of use
-4. Run the `build.sh` script.
+1. Obtain and uncompress the files listed below
+2. Create a `config.sh` file based on the contents of `config.sh.tpl`
+3. Create a database of the specified name (possibly as the postgres user)
+4. Run `./setup.sh` if this is the first time of use
+5. Run the `build.sh` script.
 
+The files you need to obtain are:
+
+- https://ftp.uniprot.org/pub/databases/uniprot/knowledgebase/complete/uniprot_sprot.dat.gz
+- https://ftp.uniprot.org/pub/databases/uniprot/knowledgebase/complete/uniprot_sprot.faa.gz
+- ftp://ftp.ncbi.nih.gov/repository/OMIM/ARCHIVE/omim.txt.Z
+
+and all of these must be uncompressed.
+
+The `build.sh` script does the following:
 
 ```
 build.sh - main shell script to run the required programs:
