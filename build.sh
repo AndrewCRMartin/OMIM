@@ -1,16 +1,22 @@
-omimdata=/acrm/data/omim/omim.txt.Z
+omimdatadir=/acrm/data/tmp/
+omimdata=$omimdatadir/omim.txt.Z
+omimurl=ftp://ftp.ncbi.nih.gov/repository/OMIM/omim.txt.Z
 sprot=/acrm/data/swissprot/full/uniprot_sprot.dat
 fasta=/acrm/data/swissprot/full/uniprot_sprot.fasta
 idx=/tmp/sprot.idx
-dbname=omim
+dbname=omim2
 dbhost=acrm8
 validate=/home/bsm/martin/SAAP/omim/validate.pl
 htmldir=/acrm/www/html/omim
 cgidir=/acrm/www/cgi-bin/omim
 
+
+# Grab the OMIM data
+\rm -f $omimdata
+(cd $omimdatadir; wget $omimurl)
 # Block web access
-echo "Blocking web access..."
-./unavailable.sh $cgidir $htmldir
+#echo "Blocking web access..."
+#./unavailable.sh $cgidir $htmldir
 # Create the database
 echo "Creating database tables..."
 psql -h $dbhost $dbname < create.sql
@@ -38,6 +44,6 @@ echo "Dumping mapping as an XML file..."
 # Store the date of the update
 ./setdate.pl >$htmldir/datefile.txt
 # Restore web access
-echo "Restoring web access..."
-./available.sh $cgidir $htmldir
+#echo "Restoring web access..."
+#./available.sh $cgidir $htmldir
 
