@@ -1,3 +1,4 @@
+DROP VIEW  sws_omim_mutant;
 DROP VIEW  sws_mutant;
 DROP TABLE swsomim     CASCADE;
 DROP TABLE omim_mutant CASCADE;
