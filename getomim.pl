@@ -58,8 +58,8 @@ use ACRMPerlVars;
 
 my($fname, $ac, %sprot_tell, $indexfile, $entry, @acs, $tmp_fasta);
 my(@omims, $omim, $tmp_mutant, $i, $results);
-my($native_p, $resnum_p, $mutant_p);
-my($native, $resnum, $mutant);
+my($native_p, $resnum_p, $mutant_p, $record_p);
+my($native, $resnum, $mutant, $record);
 
 UsageDie() if(defined($::h));
 
@@ -76,13 +76,14 @@ $::dbh = DBI->connect("dbi:Pg:dbname=$::dbname;host=$::dbhost");
 die "Could not connect to database: $DNI::errstr" if(!$::dbh);
 
 # Extract the mutant list for this OMIM entry
-($native_p, $resnum_p, $mutant_p) = GetMutantList($ac, $omim);
+($native_p, $resnum_p, $mutant_p, $record_p) = GetMutantList($ac, $omim);
 for($i=0; $i<scalar(@$native_p); $i++)
 {
+    $record = $$record_p[$i];
     $native = $$native_p[$i];
     $resnum = $$resnum_p[$i];
     $mutant = $$mutant_p[$i];
-    print "$native $resnum $mutant\n";
+    print "$record $native $resnum $mutant\n";
 }
 
 # Tidy up
@@ -91,23 +92,26 @@ for($i=0; $i<scalar(@$native_p); $i++)
 sub GetMutantList
 {
     my($ac, $omim) = @_;
-    my(@native, @resnum, @mutant);
+    my(@native, @resnum, @mutant, @record);
     my($sql, $sth, @results);
 
-    $sql = "SELECT native, resnum, mutant FROM sws_mutant WHERE ac = '$ac' AND omim = '$omim'";
+    $sql = "SELECT record, native, resnum_orig, mutant FROM sws_mutant WHERE ac = '$ac' AND omim = '$omim'";
     $sth=$::dbh->prepare($sql);
     if($sth && $sth->execute)
     {
         while(@results = $sth->fetchrow_array)
         {
-            push @native, $results[0];
-            push @resnum, $results[1];
-            push @mutant, $results[2];
+            push @record, $results[0];
+            push @native, $results[1];
+            push @resnum, $results[2];
+            push @mutant, $results[3];
         }
     }
 
-    return(\@native, \@resnum, \@mutant);
+    return(\@native, \@resnum, \@mutant, \@record);
 }
+
+
 
 #*************************************************************************
 sub UsageDie
