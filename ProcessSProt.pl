@@ -59,7 +59,7 @@ $|=1;
 
 print "COPY swsomim FROM STDIN;\n";
 ProcessSwissProt();
-print "\\.";
+print "\\.\n";
 
 #######################################################################
 sub ProcessSwissProt
