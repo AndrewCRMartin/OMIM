@@ -26,7 +26,7 @@ The files you need to obtain are:
 
 - https://ftp.uniprot.org/pub/databases/uniprot/knowledgebase/complete/uniprot_sprot.dat.gz
 - https://ftp.uniprot.org/pub/databases/uniprot/knowledgebase/complete/uniprot_sprot.faa.gz
-- ftp://ftp.ncbi.nih.gov/repository/OMIM/ARCHIVE/omim.txt.Z
+- https://ftp.ncbi.nih.gov/repository/OMIM/ARCHIVE/omim.txt.Z
 
 and all of these must be uncompressed.
 
