@@ -73,9 +73,9 @@ DoProcessing();
 #*************************************************************************
 sub DoProcessing
 {
-    my($sql, $sth, $rv, @results, $result, $omim, $ac);
+    my($sql, $sth, $rv, @results, $result, $omim, $ac, $field);
 
-    $sql = "SELECT omim, record, ac, native, resnum, mutant, valid, resnum_orig FROM sws_mutant ORDER BY omim, ac, record";
+    $sql = "SELECT s.omim, s.record, s.ac, s.native, s.resnum, s.mutant, s.valid, s.resnum_orig, d.descrip FROM sws_mutant s, omim_description d WHERE d.omim = s.omim AND d.record = s.record ORDER BY omim, ac, record";
     $sth = $::dbh->prepare($sql);
     $rv = $sth->execute;
     if($rv)
@@ -86,9 +86,18 @@ sub DoProcessing
         while(@results = $sth->fetchrow_array)
         {
             # remove spaces
+            $field = 0;
             foreach my $result (@results)
             {
-                $result =~ s/\s//g;
+                if($field < 8)
+                {
+                    $result =~ s/\s//g;
+                }
+                elsif($field == 8)
+                {
+                    $result =~ s/,/ -/g;
+                }
+                $field++;
             }
             
             if(defined($::xml))
@@ -119,6 +128,7 @@ sub DoProcessing
                 print  "            <resnum valid='$results[6]'>$results[4]</resnum>\n";
                 print  "            <native>$results[3]</native>\n";
                 print  "            <mutant>$results[5]</mutant>\n";
+                print  "            <description>$results[8]</description>\n";
                 print  "         </record>\n";
             }
             else
