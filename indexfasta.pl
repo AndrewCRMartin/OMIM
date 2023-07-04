@@ -4,11 +4,11 @@
 #   Program:    indexfasta
 #   File:       indexfasta.pl
 #   
-#   Version:    V1.1
-#   Date:       06.12.06
+#   Version:    V1.2
+#   Date:       30.09.08
 #   Function:   Index the FASTA dump of SwissProt
 #   
-#   Copyright:  (c) UCL / Dr. Andrew C. R. Martin 2005-2006
+#   Copyright:  (c) UCL / Dr. Andrew C. R. Martin 2005-2008
 #   Author:     Dr. Andrew C. R. Martin
 #   Address:    Biomolecular Structure & Modelling Unit,
 #               Department of Biochemistry & Molecular Biology,
@@ -53,6 +53,8 @@
 #   13.06.05 V1.0  Original
 #   06.12.06 V1.1  Format of the SwissProt FASTA dump has changed. Code
 #                  now checks that some sequences were found and indexed
+#   30.09.08 V1.2  Dump format changed again... There was another change
+#                  inbetween (more allowed ACs) which is now accounted for
 #
 #*************************************************************************
 use strict;
@@ -69,9 +71,14 @@ $count = 0;
 while(<FILE>) {
 # 06.12.06 The format of this line changed!!!!
 #    if(/^>(\w+)\s\(([OPQ][0-9][A-Z0-9][A-Z0-9][A-Z0-9][0-9])\)/)
-    if(/^>([OPQ][0-9][A-Z0-9][A-Z0-9][A-Z0-9][0-9])\|/)
+# 30.09.08 The format has changed again!!!!
+# Now also incorporate the [A-NR-Z] lines which we were missing
+# before (from *previous* change!)
+#    if(/^>([OPQ][0-9][A-Z0-9][A-Z0-9][A-Z0-9][0-9])\|/)
+    if((/^>(sp\|)?([OPQ][0-9][A-Z0-9][A-Z0-9][A-Z0-9][0-9])\|/) ||
+       (/^>(sp\|)?([A-NR-Z]\d[A-Z][A-Z0-9][A-Z0-9]\d)/))
     {
-        $key=$1;
+        $key=$2;
         $sprot_tell{$key} = $pos;
         $count++;
     }
