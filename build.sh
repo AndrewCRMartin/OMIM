@@ -5,7 +5,12 @@ idx=/tmp/sprot.idx
 dbname=omim
 dbhost=acrm1
 validate=/home/bsm/martin/SAAP/omim/validate.pl
+htmldir=/acrm/www/html/omim
+cgidir=/acrm/www/cgi-bin/omim
 
+# Block web access
+echo "Blocking web access..."
+./unavailable.sh $cgidir $htmldir
 # Create the database
 echo "Creating database tables..."
 psql $dbname < create.sql
@@ -23,6 +28,12 @@ echo "Validating OMIM entries..."
 ./wrapvalidate.pl -validate=$validate -dbname=$dbname -dbhost=$dbhost $fasta $idx | ./update_resnums.pl | psql $dbname
 # Now dump the mapping in plain text and XML
 echo "Dumping mapping as a CSV file..."
-./dump_mapping.pl -dbname=$dbname -dbhost=$dbhost > omim_sprot.csv
+./dump_mapping.pl -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.csv.tmp
 echo "Dumping mapping as an XML file..."
-./dump_mapping.pl -xml -dbname=$dbname -dbhost=$dbhost > omim_sprot.xml
+./dump_mapping.pl -xml -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.xml.tmp
+\mv -f $htmldir/omim_sprot.csv.tmp $htmldir/omim_sprot.csv
+\mv -f $htmldir/omim_sprot.xml.tmp $htmldir/omim_sprot.xml
+# Restore web access
+echo "Restoring web access..."
+./available.sh $cgidir $htmldir
+
