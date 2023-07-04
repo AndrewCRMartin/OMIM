@@ -101,7 +101,7 @@ sub DoProcessing
 
                 print  "      <record id='$results[1]'>\n";
                 print  "         <sprot_ac>$results[2]</sprot_ac>\n";
-                printf "         <omim_resnum correct='%s'>$results[7]</resnum>\n",
+                printf "         <omim_resnum correct='%s'>$results[7]</omim_resnum>\n",
                        ((($results[4] == $results[7])&&
                          ($results[6] ne 'f'))?'t':'f');
                 print  "         <resnum valid='$results[6]'>$results[4]</resnum>\n";
