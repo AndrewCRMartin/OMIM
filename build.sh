@@ -28,11 +28,13 @@ echo "Validating OMIM entries..."
 ./wrapvalidate.pl -validate=$validate -dbname=$dbname -dbhost=$dbhost $fasta $idx | ./update_resnums.pl | psql -h $dbhost $dbname
 # Now dump the mapping in plain text and XML
 echo "Dumping mapping as a CSV file..."
-./dump_mapping.pl -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.csv.tmp
+./dump_mapping.pl -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.csv.`date +%F`
 echo "Dumping mapping as an XML file..."
-./dump_mapping.pl -xml -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.xml.tmp
-\mv -f $htmldir/omim_sprot.csv.tmp $htmldir/omim_sprot.csv
-\mv -f $htmldir/omim_sprot.xml.tmp $htmldir/omim_sprot.xml
+./dump_mapping.pl -xml -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.xml.`date +%F`
+\cp -f $htmldir/omim_sprot.csv.`date +%F` $htmldir/omim_sprot.csv
+\cp -f $htmldir/omim_sprot.xml.`date +%F` $htmldir/omim_sprot.xml
+(cd $htmldir; gzip omim_sprot.csv.`date +%F`)
+(cd $htmldir; gzip omim_sprot.xml.`date +%F`)
 # Store the date of the update
 ./setdate.pl >$htmldir/datefile.txt
 # Restore web access
