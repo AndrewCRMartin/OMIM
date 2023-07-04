@@ -32,3 +32,8 @@ CREATE VIEW sws_mutant AS
         SELECT s.ac, o.omim, o.record, o.native, o.resnum_orig, o.resnum, o.mutant, o.valid
         FROM swsomim s, omim_mutant o
         WHERE s.omim = o.omim;
+
+GRANT SELECT ON omim_description TO PUBLIC;
+GRANT SELECT ON omim_mutant      TO PUBLIC;
+GRANT SELECT ON sws_mutant       TO PUBLIC;
+GRANT SELECT ON swsomim          TO PUBLIC;
