@@ -5,7 +5,7 @@ DROP TABLE omim_mutant CASCADE;
 DROP TABLE omim_description CASCADE;
 
 CREATE TABLE swsomim
-        ( ac VARCHAR(8),
+        ( ac VARCHAR(16),
           omim VARCHAR(6)
         );
 CREATE TABLE omim_mutant

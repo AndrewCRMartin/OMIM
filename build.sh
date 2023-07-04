@@ -8,7 +8,7 @@ if [ -n "$param" ]; then
       # Grab the OMIM data
       omimdata=$tmpdir/$omimfile
       \rm -f $omimdata
-      (cd $tmpdir; wget $omimurl)
+      (cd $tmpdir; wget $omimurl; gunzip $omimfile.Z)
    else
       echo "Usage: ./build.sh [-get]"
       echo "  -get - grab OMIM with wget and uses that"
@@ -32,7 +32,7 @@ echo "Creating database tables..."
 psql -h $dbhost $dbname < create.sql
 # Grab the mutations from OMIM
 echo "Parsing OMIM data..."
-zcat $omimdata | ./parseomim.pl | psql -h $dbhost $dbname
+cat $omimdata | ./parseomim.pl | psql -h $dbhost $dbname
 # Cross-reference with SwissProt
 echo "Parsing SwissProt data..."
 ./ProcessSProt.pl $sprot | psql -h $dbhost $dbname

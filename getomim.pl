@@ -65,7 +65,7 @@ UsageDie() if(defined($::h));
 
 # Default variables
 $::dbname    = "omim" if(!defined($::dbname));
-$::dbhost    = $ACRMPerlVars::pghost if(!defined($::dbhost));
+$::dbhost    = $ENV{'PGHOST'} if(!defined($::dbhost));
 
 # Grab data from command line
 $ac = shift(@ARGV);

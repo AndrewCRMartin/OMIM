@@ -43,11 +43,17 @@ build.sh - main shell script to run the required programs:
    setdate.pl        - Puts the date in a file
 ```
 
+Once the database is built, the summary data are all stored in the
+`sws_mutant` view in the database.
+
 The following two scripts are for accessing data:
 
 ```
 getfasta.pl - Utility to grab a FASTA entry from the indexed file
-getomim.pl  - Utility to grab a mutation set from the database
+getomim.pl  - Utility to grab a mutation set from the database.
+              Takes a SwissProt accession and an OMIM accession.
+              Use -dbname=xxx and -dbhost=xxxx to specify the
+              database name and host
 ```
 
 There is also a `www` directory containing HTML and CGI scripts to
