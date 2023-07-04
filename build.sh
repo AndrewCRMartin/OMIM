@@ -1,22 +1,41 @@
-omimdatadir=/acrm/data/tmp/
-omimdata=$omimdatadir/omim.txt.Z
-omimurl=ftp://ftp.ncbi.nih.gov/repository/OMIM/omim.txt.Z
+#!/bin/bash
 sprot=/acrm/data/swissprot/full/uniprot_sprot.dat
 fasta=/acrm/data/swissprot/full/uniprot_sprot.fasta
 idx=/tmp/sprot.idx
-dbname=omim2
+dbname=omim
 dbhost=acrm8
 validate=/home/bsm/martin/SAAP/omim/validate.pl
 htmldir=/acrm/www/html/omim
 cgidir=/acrm/www/cgi-bin/omim
+omimdatadir=/acrm/data/omim
+tmpdir=/acrm/data/tmp
+omimfile=omim.txt.Z
+omimurl=ftp://ftp.ncbi.nih.gov/repository/OMIM/$omimfile
 
+# If called with "-get" then grab the file
+param=$1
+if [ -n "$param" ]; then
+   if [ $param = "-get" ]; then
+      # Grab the OMIM data
+      omimdata=$tmpdir/$omimfile
+      \rm -f $omimdata
+      (cd $tmpdir; wget $omimurl)
+   else
+      echo "Usage: ./build.sh [-get]"
+      echo "  -get - grab OMIM with wget and uses that"
+      echo ""
+      echo "Populates the OMIM database from the OMIM resource. Normally"
+      echo "uses our mirror of those data, but can be forced to grab the"
+      echo "datafile as part of this run by using -get"
+      exit 0;
+   fi
+else
+    omimdata=$omimdatadir/$omimfile
+fi
 
-# Grab the OMIM data
-\rm -f $omimdata
-(cd $omimdatadir; wget $omimurl)
 # Block web access
-#echo "Blocking web access..."
-#./unavailable.sh $cgidir $htmldir
+echo "Blocking web access..."
+./unavailable.sh $cgidir $htmldir
 # Create the database
 echo "Creating database tables..."
 psql -h $dbhost $dbname < create.sql
@@ -44,6 +63,6 @@ echo "Dumping mapping as an XML file..."
 # Store the date of the update
 ./setdate.pl >$htmldir/datefile.txt
 # Restore web access
-#echo "Restoring web access..."
-#./available.sh $cgidir $htmldir
+echo "Restoring web access..."
+./available.sh $cgidir $htmldir
 
