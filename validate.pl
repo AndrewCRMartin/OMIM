@@ -149,7 +149,7 @@ sub Slide
         {
             $nmatch++ if(defined($$full_p[$$resnum_p[$j]+$i-1]) &&
                          ($$full_p[$$resnum_p[$j]+$i-1] eq
-                          $$key_p[$$resnum_p[$j]]));  ##HERE
+                          $$key_p[$j]));  ##HERE
         }
 
         if(($nmatch == $nmut - $outofrange) && ($nmut > $outofrange))
@@ -176,7 +176,7 @@ sub Slide
             if(($$resnum_p[$j]+$i-1) >= 0)
             {
                 $nmatch++ if($$full_p[$$resnum_p[$j]+$i-1] eq
-                             $$key_p[$$resnum_p[$j]]);
+                             $$key_p[$j]);
             }
         }
 
@@ -238,16 +238,12 @@ sub ReadMutations
             ($record, $aa_orig, $resnum, $aa_mut) = split;
             $aa_orig = "\U$aa_orig";
             $aa_mut  = "\U$aa_mut";
-            $seq_key[$resnum]  = $::throne{$aa_orig};
+            push @seq_key, $::throne{$aa_orig};
             push @seq_orig, $aa_orig;
             push @resnums, $resnum;
             push @records, $record;
             push @seq_mut, $aa_mut;
         }
-    }
-    for($i=0; $i<@seq_key; $i++)
-    {
-        $seq_key[$i] = 'X' if(!defined($seq_key[$i]));
     }
 
     return(\@seq_orig, \@seq_mut, \@seq_key, \@resnums, \@records);
