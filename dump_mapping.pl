@@ -1,4 +1,4 @@
-#!/acrm/usr/local/bin/perl -s
+#!/usr/bin/perl -s
 #*************************************************************************
 #
 #   Program:    
@@ -73,63 +73,41 @@ DoProcessing();
 #*************************************************************************
 sub DoProcessing
 {
-    my($sql, $sth, $rv, @results, $result, $omim, $ac, $field);
+    my($sql, $sth, $rv, @results, $result, $omim);
 
-    $sql = "SELECT s.omim, s.record, s.ac, s.native, s.resnum, s.mutant, s.valid, s.resnum_orig, d.descrip FROM sws_mutant s, omim_description d WHERE d.omim = s.omim AND d.record = s.record ORDER BY omim, ac, record";
+    $sql = "SELECT omim, record, ac, native, resnum, mutant, valid, resnum_orig FROM sws_mutant ORDER BY omim, record";
     $sth = $::dbh->prepare($sql);
     $rv = $sth->execute;
     if($rv)
     {
         $omim = "";
-        $ac   = "";
         print "<omim_mutations>\n" if(defined($::xml));
         while(@results = $sth->fetchrow_array)
         {
             # remove spaces
-            $field = 0;
             foreach my $result (@results)
             {
-                if($field < 8)
-                {
-                    $result =~ s/\s//g;
-                }
-                elsif($field == 8)
-                {
-                    $result =~ s/,/ -/g;
-                }
-                $field++;
+                $result =~ s/\s//g;
             }
             
             if(defined($::xml))
             {
                 if($results[0] ne $omim)
                 {
-                    if($omim ne "")
-                    {
-                        print "      </sprot>\n";
-                        print "   </omim>\n";
-                    }
+                    print "   </omim>\n" if($omim ne "");
                     $omim = $results[0];
-                    $ac   = $results[2];
                     print "   <omim id='$omim'>\n";
-                    print "      <sprot ac='$ac'>\n";
-                }
-                elsif($results[2] ne $ac)
-                {
-                    $ac   = $results[2];
-                    print "      </sprot>\n";
-                    print "      <sprot ac='$ac'>\n";
                 }
 
-                print  "         <record id='$results[1]'>\n";
-                printf "            <omim_resnum correct='%s'>$results[7]</omim_resnum>\n",
+                print  "      <record id='$results[1]'>\n";
+                print  "         <sprot_ac>$results[2]</sprot_ac>\n";
+                printf "         <omim_resnum correct='%s'>$results[7]</resnum>\n",
                        ((($results[4] == $results[7])&&
                          ($results[6] ne 'f'))?'t':'f');
-                print  "            <resnum valid='$results[6]'>$results[4]</resnum>\n";
-                print  "            <native>$results[3]</native>\n";
-                print  "            <mutant>$results[5]</mutant>\n";
-                print  "            <description>$results[8]</description>\n";
-                print  "         </record>\n";
+                print  "         <resnum valid='$results[6]'>$results[4]</resnum>\n";
+                print  "         <native>$results[3]</native>\n";
+                print  "         <mutant>$results[5]</mutant>\n";
+                print  "      </record>\n";
             }
             else
             {
@@ -144,7 +122,6 @@ sub DoProcessing
         }
         if(defined($::xml))
         {
-            print "      </sprot>\n" if($ac ne "");
             print "   </omim>\n" if($omim ne "");
             print "</omim_mutations>\n";
         }
