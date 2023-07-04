@@ -14,10 +14,12 @@ Note that the OMIM data have not been distributed in this format since
 https://www.omim.org/downloads/
 To share the data you then need to purchase a licence.
 
-The main `build.sh` shell script is
-All you should have to run to build and populate the database is to
-create a `config.sh` file based on the contents of `config.sh.tpl` then
-run the `build.sh` script.
+All you should have to run to build and populate the database is:
+
+1. Create a `config.sh` file based on the contents of `config.sh.tpl`
+2. Run `./setup.sh` if this is the first time of use
+3. Run the `build.sh` script.
+
 
 ```
 build.sh - main shell script to run the required programs:

@@ -22,9 +22,11 @@ else
     omimdata=$omimdatadir/$omimfile
 fi
 
-# Block web access
-echo "Blocking web access..."
-./unavailable.sh $cgidir $htmldir
+if [ "X$makeweb" == "XTRUE" ]; then
+    # Block web access
+    echo "Blocking web access..."
+    ./unavailable.sh $cgidir $htmldir
+fi
 # Create the database
 echo "Creating database tables..."
 psql -h $dbhost $dbname < create.sql
@@ -40,18 +42,24 @@ echo "Indexing FASTA version of SwissProt..."
 # Now validate the residue number for the OMIM entries
 echo "Validating OMIM entries..."
 ./wrapvalidate.pl -validate=$validate -dbname=$dbname -dbhost=$dbhost $fasta $idx | ./update_resnums.pl | psql -h $dbhost $dbname
-# Now dump the mapping in plain text and XML
-echo "Dumping mapping as a CSV file..."
-./dump_mapping.pl -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.csv.`date +%F`
-echo "Dumping mapping as an XML file..."
-./dump_mapping.pl -xml -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.xml.`date +%F`
-\cp -f $htmldir/omim_sprot.csv.`date +%F` $htmldir/omim_sprot.csv
-\cp -f $htmldir/omim_sprot.xml.`date +%F` $htmldir/omim_sprot.xml
-(cd $htmldir; gzip omim_sprot.csv.`date +%F`)
-(cd $htmldir; gzip omim_sprot.xml.`date +%F`)
-# Store the date of the update
-./setdate.pl >$htmldir/datefile.txt
-# Restore web access
-echo "Restoring web access..."
-./available.sh $cgidir $htmldir
+
+if [ "X$makeweb" == "XTRUE" ]; then
+    # Now dump the mapping in plain text and XML
+    echo "Dumping mapping as a CSV file..."
+    ./dump_mapping.pl -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.csv.`date +%F`
+    echo "Dumping mapping as an XML file..."
+    ./dump_mapping.pl -xml -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.xml.`date +%F`
+    \cp -f $htmldir/omim_sprot.csv.`date +%F` $htmldir/omim_sprot.csv
+    \cp -f $htmldir/omim_sprot.xml.`date +%F` $htmldir/omim_sprot.xml
+    (cd $htmldir; gzip omim_sprot.csv.`date +%F`)
+    (cd $htmldir; gzip omim_sprot.xml.`date +%F`)
+
+    # Store the date of the update
+    ./setdate.pl >$htmldir/datefile.txt
+
+    # Restore web access
+    echo "Restoring web access..."
+    ./available.sh $cgidir $htmldir
+fi
+
 
