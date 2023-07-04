@@ -60,6 +60,8 @@ my ($matches, $newres);
 while(<>)
 {
     chomp;
+# NOTE! This is reading our file not SwissProt FASTA dump, so don't need
+# to worry if format changes!
     if(/^>\s([OPQ][0-9][A-Z0-9][A-Z0-9][A-Z0-9][0-9])\s:\s(.*)/)
     {
         $ac = $1;
