@@ -1,10 +1,10 @@
 #!/bin/bash
 
-sub CheckFile
+function CheckFile
 {
     if [ ! -f $1 ]; then
         echo "You must download and provide file: $1";
-        setenv error=TRUE
+        export error=TRUE
     fi
 
     if [ "X$2" == "Xdie" ] && [ "X$error" == "XTRUE" ]; then
@@ -13,7 +13,7 @@ sub CheckFile
     fi
 }
 
-sub MakeDir
+function MakeDir
 {
     if [ ! -d $1 ]; then
         mkdir $1
@@ -32,7 +32,7 @@ CheckFile ./config.sh die
 MakeDir $omimdatadir
 MakeDir $tmpdir
 
-createdb $dbname
+#createdb -h$dbhost $dbname
 
 if [ "X$makeweb" == "XTRUE" ]; then
     MakeDir $htmldir
