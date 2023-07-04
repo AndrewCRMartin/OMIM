@@ -1,0 +1,90 @@
+head	1.1;
+access;
+symbols;
+locks
+	martin:1.1; strict;
+comment	@.\" @;
+
+
+1.1
+date	2006.12.06.18.08.25;	author martin;	state Exp;
+branches;
+next	;
+
+
+desc
+@Readme file
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@ciall.sh - check in all Perl scripts
+build.sh - main shell script to run the required programs:
+   parseomim.pl      - Grab mutations from OMIM into the database
+   ProcessSProt.pl   - Grab OMIM links from SwissProt
+   indexfasta.pl     - Index FASTA for rapid lookup
+   wrapvalidate.pl   - Validate each entry in the database by calling:
+      validate.pl    - Validates the residue numbers of an entry
+   update_resnums.pl - Updates the residue numbers in the database
+   setdate.pl        - Puts the date in a file
+getfasta.pl - Utility to grab a FASTA entry from th indexed file
+getomim.pl  - Utility to grab a mutation set from the database
+
+omim.pl - CGI script to access database
+stats.pl - CGI script to access stats from database
+
+Programs work as follows:
+
+parseomim.pl
+------------
+*RECORD* marks the start of each record which is split into *FIELD*s
+The *FIELD* keyword is followed by a type. These data are stored
+for a record at a time. The accession is extracted from the NO *FIELD*
+and the mutation data are extracted from the AV *FIELD*s
+
+The mutation data are validated (i.e. mutated from a valid AA to a 
+valid AA - not DEL, INS, etc.) and written as tab-delimited data for 
+loading into the 'omim_mutant' d/b table
+
+At the same time, the descriptions are stored into a separate hash.
+After the omim_mutant data have been written, the 'omim_descriptions'
+table is also written as tab-delimited data.
+
+
+ProcessSProt.pl
+---------------
+This runs through the SwissProt file. For each record, the ID, set
+of ACs, the date (DT), sequence and DR (database crosslinks) fields
+are extracted. From DR, the PDB and OMIM cross references are stored.
+The results are simply dumped as a tab-delimited data table in the
+form of AC/OMIM tuples which are loaded into the 'swsomim' table.
+
+Currently this is done only for the primary accession. It might be
+a good idea to do it for all accessions?
+
+N.B. Since 'sws_mutant' and 'sws_omim_mutant' are VIEWs on smsomim 
+and omim_mutant, they will be populated at this stage.
+
+indexfasta.pl  
+-------------
+This simply creates a DBM hash with offsets to each entry in the
+FASTA version of SwissProt using the accession as the key.
+You can then obtain a given FASTA entry using getfasta.pl
+
+wrapvalidate.pl
+---------------
+validate.pl    
+-----------
+update_resnums.pl
+-----------------
+setdate.pl     
+----------
+getfasta.pl
+-----------
+getomim.pl 
+----------
+@

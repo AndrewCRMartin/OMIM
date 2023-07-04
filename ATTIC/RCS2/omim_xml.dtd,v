@@ -1,0 +1,45 @@
+head	1.1;
+access;
+symbols;
+locks
+	martin:1.1; strict;
+comment	@# @;
+
+
+1.1
+date	2005.06.17.16.21.52;	author martin;	state Exp;
+branches;
+next	;
+
+
+desc
+@DTD for XML version
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@<!ELEMENT omim_mutations ( omim+ ) >
+
+<!ELEMENT omim ( sprot ) >
+<!ATTLIST omim id NMTOKEN #REQUIRED >
+
+<!ELEMENT sprot ( record+ ) >
+<!ATTLIST sprot ac ID #REQUIRED >
+
+<!ELEMENT record ( omim_resnum, resnum, native, mutant ) >
+<!ATTLIST record id NMTOKEN #REQUIRED >
+
+<!ELEMENT omim_resnum ( #PCDATA ) >
+<!ATTLIST omim_resnum correct ( f | t ) #REQUIRED >
+
+<!ELEMENT resnum ( #PCDATA ) >
+<!ATTLIST resnum valid CDATA #REQUIRED >
+
+<!ELEMENT native ( #PCDATA ) >
+
+<!ELEMENT mutant ( #PCDATA ) >
+@

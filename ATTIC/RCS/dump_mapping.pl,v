@@ -1,0 +1,297 @@
+head	1.6;
+access;
+symbols;
+locks
+	martin:1.6; strict;
+comment	@# @;
+
+
+1.6
+date	2006.12.06.18.08.45;	author martin;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2006.02.02.15.19.16;	author martin;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.06.17.16.20.09;	author martin;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.06.17.14.58.39;	author martin;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.06.17.14.53.00;	author martin;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.06.17.12.55.41;	author martin;	state Exp;
+branches;
+next	;
+
+
+desc
+@Dumps mapping as CSV file or XML
+@
+
+
+1.6
+log
+@Changed Perl version
+@
+text
+@#!/acrm/usr/local/bin/perl -s
+#*************************************************************************
+#
+#   Program:    
+#   File:       
+#   
+#   Version:    
+#   Date:       
+#   Function:   
+#   
+#   Copyright:  (c) UCL / Dr. Andrew C. R. Martin 2004
+#   Author:     Dr. Andrew C. R. Martin
+#   Address:    Biomolecular Structure & Modelling Unit,
+#               Department of Biochemistry & Molecular Biology,
+#               University College,
+#               Gower Street,
+#               London.
+#               WC1E 6BT.
+#   Phone:      +44 (0)171 679 7034
+#   EMail:      andrew@@bioinf.org.uk
+#               martin@@biochem.ucl.ac.uk
+#   Web:        http://www.bioinf.org.uk/
+#               
+#               
+#*************************************************************************
+#
+#   This program is not in the public domain, but it may be copied
+#   according to the conditions laid out in the accompanying file
+#   COPYING.DOC
+#
+#   The code may be modified as required, but any modifications must be
+#   documented so that the person responsible can be identified. If 
+#   someone else breaks this code, I don't want to be blamed for code 
+#   that does not work! 
+#
+#   The code may not be sold commercially or included as part of a 
+#   commercial product except as described in the file COPYING.DOC.
+#
+#*************************************************************************
+#
+#   Description:
+#   ============
+#
+#*************************************************************************
+#
+#   Usage:
+#   ======
+#
+#*************************************************************************
+#
+#   Revision History:
+#   =================
+#
+#*************************************************************************
+# Packages to use
+use ACRMPerlVars;
+use DBI;
+
+use strict;
+
+$|=1;
+
+# Default variables
+$::dbname    = "omim" if(!defined($::dbname));
+$::dbhost    = $ACRMPerlVars::pghost if(!defined($::dbhost));
+
+# Connect to the database
+$::dbh  = DBI->connect("dbi:Pg:dbname=$::dbname;host=$::dbhost");
+die "Could not connect to database: $DBI::errstr" if(!$::dbh);
+
+DoProcessing();
+
+#*************************************************************************
+sub DoProcessing
+{
+    my($sql, $sth, $rv, @@results, $result, $omim, $ac, $field);
+
+    $sql = "SELECT s.omim, s.record, s.ac, s.native, s.resnum, s.mutant, s.valid, s.resnum_orig, d.descrip FROM sws_mutant s, omim_description d WHERE d.omim = s.omim AND d.record = s.record ORDER BY omim, ac, record";
+    $sth = $::dbh->prepare($sql);
+    $rv = $sth->execute;
+    if($rv)
+    {
+        $omim = "";
+        $ac   = "";
+        print "<omim_mutations>\n" if(defined($::xml));
+        while(@@results = $sth->fetchrow_array)
+        {
+            # remove spaces
+            $field = 0;
+            foreach my $result (@@results)
+            {
+                if($field < 8)
+                {
+                    $result =~ s/\s//g;
+                }
+                elsif($field == 8)
+                {
+                    $result =~ s/,/ -/g;
+                }
+                $field++;
+            }
+            
+            if(defined($::xml))
+            {
+                if($results[0] ne $omim)
+                {
+                    if($omim ne "")
+                    {
+                        print "      </sprot>\n";
+                        print "   </omim>\n";
+                    }
+                    $omim = $results[0];
+                    $ac   = $results[2];
+                    print "   <omim id='$omim'>\n";
+                    print "      <sprot ac='$ac'>\n";
+                }
+                elsif($results[2] ne $ac)
+                {
+                    $ac   = $results[2];
+                    print "      </sprot>\n";
+                    print "      <sprot ac='$ac'>\n";
+                }
+
+                print  "         <record id='$results[1]'>\n";
+                printf "            <omim_resnum correct='%s'>$results[7]</omim_resnum>\n",
+                       ((($results[4] == $results[7])&&
+                         ($results[6] ne 'f'))?'t':'f');
+                print  "            <resnum valid='$results[6]'>$results[4]</resnum>\n";
+                print  "            <native>$results[3]</native>\n";
+                print  "            <mutant>$results[5]</mutant>\n";
+                print  "            <description>$results[8]</description>\n";
+                print  "         </record>\n";
+            }
+            else
+            {
+                my($i) = 0;
+                foreach my $result (@@results)
+                {
+                    print "," if($i++ != 0);
+                    print $result;
+                }
+                print "\n";
+            }        
+        }
+        if(defined($::xml))
+        {
+            print "      </sprot>\n" if($ac ne "");
+            print "   </omim>\n" if($omim ne "");
+            print "</omim_mutations>\n";
+        }
+    }
+}
+
+@
+
+
+1.5
+log
+@Now dumps the OMIM descriptive titles
+@
+text
+@d1 1
+a1 1
+#!/usr/bin/perl -s
+@
+
+
+1.4
+log
+@Some <sprot> tags weren't being closed properly
+@
+text
+@d76 1
+a76 1
+    my($sql, $sth, $rv, @@results, $result, $omim, $ac);
+d78 1
+a78 1
+    $sql = "SELECT omim, record, ac, native, resnum, mutant, valid, resnum_orig FROM sws_mutant ORDER BY omim, ac, record";
+d89 1
+d92 9
+a100 1
+                $result =~ s/\s//g;
+d131 1
+@
+
+
+1.3
+log
+@We now put the SwissProt accession as a tag wrapping each mutation
+@
+text
+@a95 4
+                if($results[2] ne $ac)
+                {
+                    print "      </sprot>\n" if($ac ne "");
+                }
+d98 5
+a102 1
+                    print "   </omim>\n" if($omim ne "");
+d104 1
+d106 1
+d108 1
+a108 1
+                if($results[2] ne $ac)
+d110 2
+a111 1
+                    $ac = $results[2];
+@
+
+
+1.2
+log
+@Fixed termination of <omim_resnum> tag
+@
+text
+@d76 1
+a76 1
+    my($sql, $sth, $rv, @@results, $result, $omim);
+d78 1
+a78 1
+    $sql = "SELECT omim, record, ac, native, resnum, mutant, valid, resnum_orig FROM sws_mutant ORDER BY omim, record";
+d84 1
+d96 4
+d106 5
+d112 2
+a113 3
+                print  "      <record id='$results[1]'>\n";
+                print  "         <sprot_ac>$results[2]</sprot_ac>\n";
+                printf "         <omim_resnum correct='%s'>$results[7]</omim_resnum>\n",
+d116 4
+a119 4
+                print  "         <resnum valid='$results[6]'>$results[4]</resnum>\n";
+                print  "         <native>$results[3]</native>\n";
+                print  "         <mutant>$results[5]</mutant>\n";
+                print  "      </record>\n";
+d134 1
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d104 1
+a104 1
+                printf "         <omim_resnum correct='%s'>$results[7]</resnum>\n",
+@

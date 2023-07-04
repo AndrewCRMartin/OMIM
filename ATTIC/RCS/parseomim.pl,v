@@ -1,0 +1,460 @@
+head	1.6;
+access;
+symbols;
+locks
+	amartin:1.6; strict;
+comment	@# @;
+
+
+1.6
+date	2023.07.04.10.14.26;	author amartin;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2006.12.06.18.09.22;	author martin;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.06.15.12.58.24;	author martin;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.06.15.11.16.38;	author martin;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.06.15.10.56.44;	author martin;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.06.13.17.44.05;	author martin;	state Exp;
+branches;
+next	;
+
+
+desc
+@Get mutation data from OMIM
+@
+
+
+1.6
+log
+@Changed to INSERT each record rather than use COPY  to deal with OMIM entry 120120 which has two .0041  subrecords and broke the primary key. Using INSERT will just reject the second entry..."
+@
+text
+@#!/acrm/usr/local/bin/perl
+#*************************************************************************
+#
+#   Program:    
+#   File:       
+#   
+#   Version:    V1.1
+#   Date:       10.12.09
+#   Function:   
+#   
+#   Copyright:  (c) UCL / Dr. Andrew C. R. Martin 2004
+#   Author:     Dr. Andrew C. R. Martin
+#   Address:    Biomolecular Structure & Modelling Unit,
+#               Department of Biochemistry & Molecular Biology,
+#               University College,
+#               Gower Street,
+#               London.
+#               WC1E 6BT.
+#   Phone:      +44 (0)171 679 7034
+#   EMail:      andrew@@bioinf.org.uk
+#               martin@@biochem.ucl.ac.uk
+#   Web:        http://www.bioinf.org.uk/
+#               
+#               
+#*************************************************************************
+#
+#   This program is not in the public domain, but it may be copied
+#   according to the conditions laid out in the accompanying file
+#   COPYING.DOC
+#
+#   The code may be modified as required, but any modifications must be
+#   documented so that the person responsible can be identified. If 
+#   someone else breaks this code, I don't want to be blamed for code 
+#   that does not work! 
+#
+#   The code may not be sold commercially or included as part of a 
+#   commercial product except as described in the file COPYING.DOC.
+#
+#*************************************************************************
+#
+#   Description:
+#   ============
+#
+#*************************************************************************
+#
+#   Usage:
+#   ======
+#
+#*************************************************************************
+#
+#   Revision History:
+#   =================
+#   V1.0  06.12.06   Original   By: ACRM
+#   V1.1  10.12.09   Changed to INSERT each record rather than use COPY
+#                    to deal with OMIM entry 120120 which has two .0041
+#                    subrecords and broke the primary key. Using INSERT
+#                    will just reject the second entry...
+#*************************************************************************
+use strict;
+
+@@::descriptions = ();
+my($description, %record, $mode, $junk);
+
+while(<>)
+{
+    if(/^\*RECORD\*/)
+    {
+        ProcessRecord(%record) if($record{'NO'});
+        undef %record;
+        $mode = '';
+    }
+    elsif(/^\*FIELD\*/)
+    {
+        ($junk,$mode) = split;
+    }
+    elsif(/^\*/)
+    {
+        $mode = '';
+    }
+    else
+    {
+        if($mode ne '')
+        {
+            $record{$mode} .= $_;
+        }
+    }
+}
+ProcessRecord(%record) if($record{'NO'});
+
+foreach $description (@@::descriptions)
+{
+    $description =~ s/\'/\'\'/g;
+    $description =~ s/\s+$//g;
+    my @@fields = split(/\t/, $description);
+    printf "INSERT INTO omim_description VALUES('%s','%s','%s');\n",
+           $fields[0], $fields[1], $fields[2];
+}
+
+
+sub ProcessRecord
+{
+    my(%record) = @@_;
+    my(@@words, $word, %mutations, $subrecord, $line, @@lines);
+    my($newsub, $indata, $info, $key, $from, $res, $to);
+
+    chomp $record{'NO'};
+
+    @@lines = split(/\n/, $record{'AV'});
+    foreach $line (@@lines)
+    {
+        if($line =~ /^\.(\d\d\d\d)/)
+        {
+            $newsub = $1;
+            foreach $key (keys %mutations)
+            {
+                ($from, $res, $to) = split(/:/, $key);
+            push @@::descriptions, "$record{'NO'}\t$subrecord\t$info";
+                printf "INSERT INTO omim_mutant VALUES('%s', '%s', '%s', %d, %d, '%s', 'f');\n",
+                       $record{'NO'}, $subrecord, $from, $res, $res, $to;
+            }
+            $subrecord = $newsub;
+            %mutations = ();
+            $indata = 1;
+            $info = "";
+        }
+        elsif($indata)
+        {            
+            if(length($line) == 0)
+            {
+                $indata = 0;
+            }
+            else
+            {
+                $info .= $line . " ";
+                @@words = split(/\s+/, $line);
+                foreach $word(@@words)
+                {
+                    if($word =~ /([A-Z][A-Z][A-Z])(\d+)([A-Z][A-Z][A-Z])/)
+                    {
+                        $from = $1;
+                        $res  = $2;
+                        $to   = $3;
+                        if((($from eq 'ALA') || 
+                            ($from eq 'CYS') || 
+                            ($from eq 'ASP') || 
+                            ($from eq 'GLU') || 
+                            ($from eq 'PHE') || 
+                            ($from eq 'GLY') || 
+                            ($from eq 'HIS') || 
+                            ($from eq 'ILE') || 
+                            ($from eq 'LYS') || 
+                            ($from eq 'LEU') || 
+                            ($from eq 'MET') || 
+                            ($from eq 'ASN') || 
+                            ($from eq 'PRO') || 
+                            ($from eq 'GLN') || 
+                            ($from eq 'ARG') || 
+                            ($from eq 'SER') || 
+                            ($from eq 'THR') || 
+                            ($from eq 'VAL') || 
+                            ($from eq 'TRP') || 
+                            ($from eq 'TYR')) &&
+                           (($to   eq 'ALA') ||
+                            ($to   eq 'CYS') ||
+                            ($to   eq 'ASP') ||
+                            ($to   eq 'GLU') ||
+                            ($to   eq 'PHE') ||
+                            ($to   eq 'GLY') ||
+                            ($to   eq 'HIS') ||
+                            ($to   eq 'ILE') ||
+                            ($to   eq 'LYS') ||
+                            ($to   eq 'LEU') ||
+                            ($to   eq 'MET') ||
+                            ($to   eq 'ASN') ||
+                            ($to   eq 'PRO') ||
+                            ($to   eq 'GLN') ||
+                            ($to   eq 'ARG') ||
+                            ($to   eq 'SER') ||
+                            ($to   eq 'THR') ||
+                            ($to   eq 'VAL') ||
+                            ($to   eq 'TRP') ||
+                            ($to   eq 'TYR')))
+                        {
+                            $key  = "$from:$res:$to";
+                            $mutations{$key} = 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    # Print the last one...
+    push @@::descriptions, "$record{'NO'}\t$subrecord\t$info";
+    foreach $key (keys %mutations)
+    {
+        ($from, $res, $to) = split(/:/, $key);
+        printf "INSERT INTO omim_mutant VALUES('%s', '%s', '%s', %d, %d, '%s', 'f');\n",
+                $record{'NO'}, $subrecord, $from, $res, $res, $to;
+    }
+}
+@
+
+
+1.5
+log
+@Changed Perl version
+@
+text
+@d7 2
+a8 2
+#   Version:    
+#   Date:       
+d53 5
+a57 1
+#
+a63 1
+print "COPY omim_mutant FROM STDIN;\n";
+a83 1
+#            $record{$mode} .= ' ' if(defined($record{$mode}));
+a88 1
+print "\\.\n";
+a89 1
+print "COPY omim_description FROM STDIN;\n";
+d92 5
+a96 1
+    print "$description\n";
+a97 1
+print "\\.\n";
+a113 1
+            push @@::descriptions, "$record{'NO'}\t$subrecord\t$info";
+d117 3
+a119 1
+                print "$record{'NO'}\t$subrecord\t$from\t$res\t$res\t$to\tf\n";
+d198 2
+a199 1
+        print "$record{'NO'}\t$subrecord\t$from\t$res\t$res\t$to\tf\n";
+@
+
+
+1.4
+log
+@Added extraction of description information
+@
+text
+@d1 1
+a1 1
+#!/usr/bin/perl
+@
+
+
+1.3
+log
+@Valid field now is t/?/f rather than y/?/n
+@
+text
+@d55 5
+d89 8
+d100 2
+a101 1
+    my(@@words, $word, %mutations, $subrecord, $line, @@lines, $newsub);
+d111 1
+d119 2
+d122 7
+a128 4
+        else
+        {
+            @@words = split(/\s+/, $line);
+            foreach $word(@@words)
+d130 3
+a132 1
+                if($word =~ /([A-Z][A-Z][A-Z])(\d+)([A-Z][A-Z][A-Z])/)
+d134 1
+a134 43
+                    $from = $1;
+                    $res  = $2;
+                    $to   = $3;
+                    if((($from eq 'ALA') || 
+                        ($from eq 'CYS') || 
+                        ($from eq 'ASP') || 
+                        ($from eq 'GLU') || 
+                        ($from eq 'PHE') || 
+                        ($from eq 'GLY') || 
+                        ($from eq 'HIS') || 
+                        ($from eq 'ILE') || 
+                        ($from eq 'LYS') || 
+                        ($from eq 'LEU') || 
+                        ($from eq 'MET') || 
+                        ($from eq 'ASN') || 
+                        ($from eq 'PRO') || 
+                        ($from eq 'GLN') || 
+                        ($from eq 'ARG') || 
+                        ($from eq 'SER') || 
+                        ($from eq 'THR') || 
+                        ($from eq 'VAL') || 
+                        ($from eq 'TRP') || 
+                        ($from eq 'TYR')) &&
+                       (($to   eq 'ALA') ||
+                        ($to   eq 'CYS') ||
+                        ($to   eq 'ASP') ||
+                        ($to   eq 'GLU') ||
+                        ($to   eq 'PHE') ||
+                        ($to   eq 'GLY') ||
+                        ($to   eq 'HIS') ||
+                        ($to   eq 'ILE') ||
+                        ($to   eq 'LYS') ||
+                        ($to   eq 'LEU') ||
+                        ($to   eq 'MET') ||
+                        ($to   eq 'ASN') ||
+                        ($to   eq 'PRO') ||
+                        ($to   eq 'GLN') ||
+                        ($to   eq 'ARG') ||
+                        ($to   eq 'SER') ||
+                        ($to   eq 'THR') ||
+                        ($to   eq 'VAL') ||
+                        ($to   eq 'TRP') ||
+                        ($to   eq 'TYR')))
+d136 47
+a182 2
+                        $key  = "$from:$res:$to";
+                        $mutations{$key} = 1;
+d189 2
+@
+
+
+1.2
+log
+@Now gets the sub-record numbers for the variants
+Stores the original residue number twice, so we can maintain
+both the original and fixed residue number in the database
+@
+text
+@d167 1
+a167 1
+        print "$record{'NO'}\t$subrecord\t$from\t$res\t$res\t$to\tn\n";
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@a57 1
+    chomp;
+d76 1
+a76 1
+            $record{$mode} .= ' ' if(defined($record{$mode}));
+d87 1
+a87 1
+    my(@@words, $word, %mutations);
+d89 4
+a92 2
+    @@words = split(/\s+/, $record{'AV'});
+    foreach $word(@@words)
+d94 12
+a105 1
+        if($word =~ /([A-Z][A-Z][A-Z])(\d+)([A-Z][A-Z][A-Z])/)
+d107 2
+a108 43
+            $from = $1;
+            $res  = $2;
+            $to   = $3;
+            if((($from eq 'ALA') || 
+                ($from eq 'CYS') || 
+                ($from eq 'ASP') || 
+                ($from eq 'GLU') || 
+                ($from eq 'PHE') || 
+                ($from eq 'GLY') || 
+                ($from eq 'HIS') || 
+                ($from eq 'ILE') || 
+                ($from eq 'LYS') || 
+                ($from eq 'LEU') || 
+                ($from eq 'MET') || 
+                ($from eq 'ASN') || 
+                ($from eq 'PRO') || 
+                ($from eq 'GLN') || 
+                ($from eq 'ARG') || 
+                ($from eq 'SER') || 
+                ($from eq 'THR') || 
+                ($from eq 'VAL') || 
+                ($from eq 'TRP') || 
+                ($from eq 'TYR')) &&
+               (($to   eq 'ALA') ||
+                ($to   eq 'CYS') ||
+                ($to   eq 'ASP') ||
+                ($to   eq 'GLU') ||
+                ($to   eq 'PHE') ||
+                ($to   eq 'GLY') ||
+                ($to   eq 'HIS') ||
+                ($to   eq 'ILE') ||
+                ($to   eq 'LYS') ||
+                ($to   eq 'LEU') ||
+                ($to   eq 'MET') ||
+                ($to   eq 'ASN') ||
+                ($to   eq 'PRO') ||
+                ($to   eq 'GLN') ||
+                ($to   eq 'ARG') ||
+                ($to   eq 'SER') ||
+                ($to   eq 'THR') ||
+                ($to   eq 'VAL') ||
+                ($to   eq 'TRP') ||
+                ($to   eq 'TYR')))
+d110 50
+a159 2
+                $key  = "$from:$res:$to";
+                $mutations{$key} = 1;
+d167 1
+a167 1
+        print "$record{'NO'}\t$from\t$res\t$to\n";
+@

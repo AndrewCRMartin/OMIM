@@ -1,0 +1,28 @@
+head	1.1;
+access;
+symbols;
+locks
+	martin:1.1; strict;
+comment	@# @;
+
+
+1.1
+date	2005.06.17.16.21.02;	author martin;	state Exp;
+branches;
+next	;
+
+
+desc
+@Script to make the web pages unavailable
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@touch $1/unavailable
+cp -p $2/index.html $2/index.html.real
+cp -p $2/unavailable.html $2/index.html
+@

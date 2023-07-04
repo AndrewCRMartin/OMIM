@@ -1,0 +1,246 @@
+head	1.7;
+access;
+symbols;
+locks
+	amartin:1.7; strict;
+comment	@# @;
+
+
+1.7
+date	2023.07.04.10.25.40;	author amartin;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2023.07.04.10.24.30;	author amartin;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2023.07.04.10.23.19;	author amartin;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2006.02.06.11.11.00;	author martin;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.07.08.16.47.41;	author martin;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.06.17.16.20.42;	author martin;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.06.17.12.56.50;	author martin;	state Exp;
+branches;
+next	;
+
+
+desc
+@Build script
+@
+
+
+1.7
+log
+@Added usage message
+@
+text
+@#!/bin/bash
+sprot=/acrm/data/swissprot/full/uniprot_sprot.dat
+fasta=/acrm/data/swissprot/full/uniprot_sprot.fasta
+idx=/tmp/sprot.idx
+dbname=omim
+dbhost=acrm8
+validate=/home/bsm/martin/SAAP/omim/validate.pl
+htmldir=/acrm/www/html/omim
+cgidir=/acrm/www/cgi-bin/omim
+omimdatadir=/acrm/data/omim
+tmpdir=/acrm/data/tmp
+omimfile=omim.txt.Z
+omimurl=ftp://ftp.ncbi.nih.gov/repository/OMIM/$omimfile
+
+# If called with "-get" then grab the file
+param=$1
+if [ -n "$param" ]; then
+   if [ $param = "-get" ]; then
+      # Grab the OMIM data
+      omimdata=$tmpdir/$omimfile
+      \rm -f $omimdata
+      (cd $tmpdir; wget $omimurl)
+   else
+      echo "Usage: ./build.sh [-get]"
+      echo "  -get - grab OMIM with wget and uses that"
+      echo ""
+      echo "Populates the OMIM database from the OMIM resource. Normally"
+      echo "uses our mirror of those data, but can be forced to grab the"
+      echo "datafile as part of this run by using -get"
+      exit 0;
+   fi
+else
+    omimdata=$omimdatadir/$omimfile
+fi
+
+# Block web access
+echo "Blocking web access..."
+./unavailable.sh $cgidir $htmldir
+# Create the database
+echo "Creating database tables..."
+psql -h $dbhost $dbname < create.sql
+# Grab the mutations from OMIM
+echo "Parsing OMIM data..."
+zcat $omimdata | ./parseomim.pl | psql -h $dbhost $dbname
+# Cross-reference with SwissProt
+echo "Parsing SwissProt data..."
+./ProcessSProt.pl $sprot | psql -h $dbhost $dbname
+# Index SwissProt FASTA file
+echo "Indexing FASTA version of SwissProt..."
+./indexfasta.pl $fasta $idx
+# Now validate the residue number for the OMIM entries
+echo "Validating OMIM entries..."
+./wrapvalidate.pl -validate=$validate -dbname=$dbname -dbhost=$dbhost $fasta $idx | ./update_resnums.pl | psql -h $dbhost $dbname
+# Now dump the mapping in plain text and XML
+echo "Dumping mapping as a CSV file..."
+./dump_mapping.pl -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.csv.`date +%F`
+echo "Dumping mapping as an XML file..."
+./dump_mapping.pl -xml -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.xml.`date +%F`
+\cp -f $htmldir/omim_sprot.csv.`date +%F` $htmldir/omim_sprot.csv
+\cp -f $htmldir/omim_sprot.xml.`date +%F` $htmldir/omim_sprot.xml
+(cd $htmldir; gzip omim_sprot.csv.`date +%F`)
+(cd $htmldir; gzip omim_sprot.xml.`date +%F`)
+# Store the date of the update
+./setdate.pl >$htmldir/datefile.txt
+# Restore web access
+echo "Restoring web access..."
+./available.sh $cgidir $htmldir
+
+@
+
+
+1.6
+log
+@Suspends and restores web access during update
+@
+text
+@d1 1
+a1 3
+omimdatadir=/acrm/data/tmp/
+omimdata=$omimdatadir/omim.txt.Z
+omimurl=ftp://ftp.ncbi.nih.gov/repository/OMIM/omim.txt.Z
+d5 1
+a5 1
+dbname=omim2
+d10 4
+d15 20
+a35 3
+# Grab the OMIM data
+\rm -f $omimdata
+(cd $omimdatadir; wget $omimurl)
+d37 2
+a38 2
+#echo "Blocking web access..."
+#./unavailable.sh $cgidir $htmldir
+d66 2
+a67 2
+#echo "Restoring web access..."
+#./available.sh $cgidir $htmldir
+@
+
+
+1.5
+log
+@Added archives of XML and CSV
+@
+text
+@d1 3
+a3 1
+omimdata=/acrm/data/omim/omim.txt.Z
+d7 1
+a7 1
+dbname=omim
+d13 4
+d18 2
+a19 2
+echo "Blocking web access..."
+./unavailable.sh $cgidir $htmldir
+d47 2
+a48 2
+echo "Restoring web access..."
+./available.sh $cgidir $htmldir
+@
+
+
+1.4
+log
+@changed db host
+@
+text
+@d31 1
+a31 1
+./dump_mapping.pl -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.csv.tmp
+d33 5
+a37 3
+./dump_mapping.pl -xml -dbname=$dbname -dbhost=$dbhost > $htmldir/omim_sprot.xml.tmp
+\mv -f $htmldir/omim_sprot.csv.tmp $htmldir/omim_sprot.csv
+\mv -f $htmldir/omim_sprot.xml.tmp $htmldir/omim_sprot.xml
+@
+
+
+1.3
+log
+@Added setdate
+@
+text
+@d6 1
+a6 1
+dbhost=acrm5
+@
+
+
+1.2
+log
+@Added available/unavailable for web pages
+@
+text
+@d1 1
+a1 1
+omimdata=/tmp/omim/omim.txt.Z
+d6 1
+a6 1
+dbhost=acrm1
+d16 1
+a16 1
+psql $dbname < create.sql
+d19 1
+a19 1
+zcat $omimdata | ./parseomim.pl | psql $dbname
+d22 1
+a22 1
+./ProcessSProt.pl $sprot | psql $dbname
+d28 1
+a28 1
+./wrapvalidate.pl -validate=$validate -dbname=$dbname -dbhost=$dbhost $fasta $idx | ./update_resnums.pl | psql $dbname
+d36 2
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d8 2
+d11 3
+d31 1
+a31 1
+./dump_mapping.pl -dbname=$dbname -dbhost=$dbhost > omim_sprot.csv
+d33 7
+a39 1
+./dump_mapping.pl -xml -dbname=$dbname -dbhost=$dbhost > omim_sprot.xml
+@

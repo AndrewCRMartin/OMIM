@@ -1,0 +1,46 @@
+head	1.2;
+access;
+symbols;
+locks
+	martin:1.2; strict;
+comment	@# @;
+
+
+1.2
+date	2005.07.08.16.58.55;	author martin;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.07.08.16.45.38;	author martin;	state Exp;
+branches;
+next	;
+
+
+desc
+@Script to find the current date - gets redirected to a file
+@
+
+
+1.2
+log
+@Removed unused line
+@
+text
+@#!/acrm/usr/local/bin/perl
+
+my($s,$m,$h,$d,$mon,$y,$wd,$yd,$isdst) = localtime(time);
+my($themon) = (Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec)[$mon];
+$y+=1900;
+print "$d-$themon-$y\n";
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@a2 1
+my($dfile) = shift(ARGV);
+@

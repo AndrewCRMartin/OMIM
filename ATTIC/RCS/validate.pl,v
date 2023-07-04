@@ -1,0 +1,550 @@
+head	1.8;
+access;
+symbols;
+locks
+	martin:1.8; strict;
+comment	@# @;
+
+
+1.8
+date	2006.12.06.18.09.27;	author martin;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2006.06.26.12.37.07;	author martin;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2005.06.15.11.17.23;	author martin;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2005.06.14.14.23.51;	author martin;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.06.14.14.13.43;	author martin;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.06.14.14.12.02;	author martin;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.06.14.14.05.54;	author martin;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.06.13.17.44.16;	author martin;	state Exp;
+branches;
+next	;
+
+
+desc
+@Validate the numbering of OMIM mutation data
+@
+
+
+1.8
+log
+@Changed Perl version
+@
+text
+@#!/acrm/usr/local/bin/perl -s
+#*************************************************************************
+#
+#   Program:    
+#   File:       
+#   
+#   Version:    
+#   Date:       
+#   Function:   
+#   
+#   Copyright:  (c) UCL / Dr. Andrew C. R. Martin 2004
+#   Author:     Dr. Andrew C. R. Martin
+#   Address:    Biomolecular Structure & Modelling Unit,
+#               Department of Biochemistry & Molecular Biology,
+#               University College,
+#               Gower Street,
+#               London.
+#               WC1E 6BT.
+#   Phone:      +44 (0)171 679 7034
+#   EMail:      andrew@@bioinf.org.uk
+#               martin@@biochem.ucl.ac.uk
+#   Web:        http://www.bioinf.org.uk/
+#               
+#               
+#*************************************************************************
+#
+#   This program is not in the public domain, but it may be copied
+#   according to the conditions laid out in the accompanying file
+#   COPYING.DOC
+#
+#   The code may be modified as required, but any modifications must be
+#   documented so that the person responsible can be identified. If 
+#   someone else breaks this code, I don't want to be blamed for code 
+#   that does not work! 
+#
+#   The code may not be sold commercially or included as part of a 
+#   commercial product except as described in the file COPYING.DOC.
+#
+#*************************************************************************
+#
+#   Description:
+#   ============
+#   Takes a FASTA file and a list of mutation sites with native residues.
+#   Builds that list into a sequence and then matches the sequence against
+#   the FASTA file. Finally reprints the mutation list with any reqiured
+#   offset applied to the residue numbers.
+#
+#*************************************************************************
+#
+#   Usage:
+#   ======
+#
+#*************************************************************************
+#
+#   Revision History:
+#   =================
+#
+#*************************************************************************
+use strict;
+
+my($keyseq_p, $mutseq_p, $origseq_p, $fasta_file, @@fullseq,
+   $fasta_seq, $resnum_p, $offset, $ok, $nmatch, $maxmatch,
+   $record_p);
+
+UsageDie() if(defined($::h));
+
+%::throne = ();
+$fasta_file = shift @@ARGV;
+
+InitThrone();
+$fasta_seq = ReadFASTA($fasta_file);
+@@fullseq = split(//, $fasta_seq);
+($origseq_p, $mutseq_p, $keyseq_p, $resnum_p, $record_p) = ReadMutations();
+
+($offset, $ok, $nmatch, $maxmatch) = Slide(\@@fullseq, $keyseq_p, $resnum_p);
+if($ok)
+{
+    print "# Perfect match at offset: $offset\n";
+    PrintResults($origseq_p, $mutseq_p, $resnum_p, $record_p, \@@fullseq, $offset);
+}
+else
+{
+    if((($offset == 0) && ($nmatch >= 2)) ||
+       (($nmatch >= 5) && ($nmatch/$maxmatch > 0.5)))
+    {
+        print "# Partial match at offset: $offset\n";
+        PrintResults($origseq_p, $mutseq_p, $resnum_p, $record_p, \@@fullseq, $offset);
+    }
+    else
+    {
+        print "# No match... Best offset was $offset with $nmatch/$maxmatch matches\n";
+    }
+}
+
+#*************************************************************************
+sub PrintResults
+{
+    my($origseq_p, $mutseq_p, $resnum_p, $record_p, $fullseq_p, $offset) = @@_;
+    my($i, $ok);
+
+    for($i=0; $i<scalar(@@$resnum_p); $i++)
+    {
+        $ok = (($$resnum_p[$i]+$offset-1 >= 0) &&
+               ($::throne{$$origseq_p[$i]} eq 
+                $$fullseq_p[$$resnum_p[$i]+$offset-1]))?"OK\n":"NO";
+        printf "%s %d %s %d %s %s", $$record_p[$i], $$resnum_p[$i],
+                                $$origseq_p[$i],
+                                $$resnum_p[$i] + $offset,
+                                $$mutseq_p[$i],
+                                $ok;
+        if($ok eq "NO")
+        {
+            if($::throne{$$origseq_p[$i]} eq
+               $$fullseq_p[$$resnum_p[$i]-1])
+            {
+                print " Matches $$resnum_p[$i]";
+            }
+            print "\n";
+        }
+
+    }
+}
+#*************************************************************************
+sub Slide
+{
+    my($full_p, $key_p, $resnum_p) = @@_;
+    my($maxslide, $i, $j, $nmut, $bestoffset, $bestnmatch, $nmatch,
+       $outofrange);
+    $bestnmatch = $bestoffset = $outofrange = 0;
+    
+    $maxslide = scalar(@@$full_p);
+    $nmut = scalar(@@$resnum_p);
+
+    # Count how many of the mutations are out of range when we apply
+    # no slide
+    for($j=0; $j<$nmut; $j++)
+    {
+        $outofrange++ if(!defined($$full_p[$$resnum_p[$j]-1]));
+    }
+
+    if($outofrange == $nmut)
+    {
+        return(0,0,0,$nmut);
+    }
+
+    for($i=0; $i<$maxslide; $i++)
+    {
+        $nmatch = 0;
+        for($j=0; $j<$nmut; $j++)
+        {
+            $nmatch++ if(($$resnum_p[$j]+$i-1 >= 0) &&
+                         defined($$full_p[$$resnum_p[$j]+$i-1]) &&
+                         ($$full_p[$$resnum_p[$j]+$i-1] eq
+                          $$key_p[$j]));
+        }
+
+        if(($nmatch >= $nmut - $outofrange) && ($nmut > $outofrange))
+        {
+            if((($i>=(-1)) && ($i<=1)) || ($nmatch > 1))
+            {
+                return($i, 1, $bestnmatch,$nmut);
+            }
+        }
+        else
+        {
+            if($nmatch > $bestnmatch)
+            {
+                $bestnmatch = $nmatch;
+                $bestoffset = $i;
+            }
+        }
+    }
+    for($i=0; $i>(0-$maxslide); $i--)
+    {
+        $nmatch = 0;
+        for($j=0; $j<$nmut; $j++)
+        {
+            $nmatch++ if(($$resnum_p[$j]+$i-1 >= 0) &&
+                         defined($$full_p[$$resnum_p[$j]+$i-1]) &&
+                         ($$full_p[$$resnum_p[$j]+$i-1] eq
+                          $$key_p[$j]));
+        }
+
+        if(($nmatch >= $nmut - $outofrange) && ($nmut > $outofrange))
+        {
+            if((($i>=(-1)) && ($i<=1)) || ($nmatch > 1))
+            {
+                return($i, 1, $bestnmatch,$nmut);
+            }
+        }
+        else
+        {
+            if($nmatch > $bestnmatch)
+            {
+                $bestnmatch = $nmatch;
+                $bestoffset = $i;
+            }
+        }
+    }
+    return($bestoffset,0,$bestnmatch,$nmut);
+}
+
+#*************************************************************************
+sub InitThrone
+{
+    %::throne = ( 'ALA' => 'A',
+                  'CYS' => 'C',
+                  'ASP' => 'D',
+                  'GLU' => 'E',
+                  'PHE' => 'F',
+                  'GLY' => 'G',
+                  'HIS' => 'H',
+                  'ILE' => 'I',
+                  'LYS' => 'K',
+                  'LEU' => 'L',
+                  'MET' => 'M',
+                  'ASN' => 'N',
+                  'PRO' => 'P',
+                  'GLN' => 'Q',
+                  'ARG' => 'R',
+                  'SER' => 'S',
+                  'THR' => 'T',
+                  'VAL' => 'V',
+                  'TRP' => 'W',
+                  'TYR' => 'Y');
+}
+
+#*************************************************************************
+sub ReadMutations
+{
+    my($resnum, $aa_orig, $aa_mut, @@seq_orig, @@seq_mut, @@seq_key, $i);
+    my(@@records, @@resnums, $record);
+    while(<>)
+    {
+        chomp;
+        s/^\s+//;
+        if(length)
+        {
+            ($record, $aa_orig, $resnum, $aa_mut) = split;
+            $aa_orig = "\U$aa_orig";
+            $aa_mut  = "\U$aa_mut";
+            push @@seq_key, $::throne{$aa_orig};
+            push @@seq_orig, $aa_orig;
+            push @@resnums, $resnum;
+            push @@records, $record;
+            push @@seq_mut, $aa_mut;
+        }
+    }
+
+    return(\@@seq_orig, \@@seq_mut, \@@seq_key, \@@resnums, \@@records);
+}
+
+
+#*************************************************************************
+sub ReadFASTA
+{
+    my($file) = @@_;
+    my($id, $sequence, $gotSequence);
+
+    open(FILE, $file) || die "Can't read $file";
+    $gotSequence = 0;
+    $sequence = "";
+    while(<FILE>)
+    {
+        s/\r//g;
+        chomp;
+        if(/^>/)
+        {
+            if($gotSequence)
+            {
+                last;
+            }
+            else
+            {
+                $id = substr($_,1);
+            }
+        }
+        else
+        {
+            $sequence = $sequence . $_;
+            $gotSequence = 1;
+        }
+    }
+    close(FILE);
+    $sequence =~ s/\s//g;
+    return($id, $sequence);
+}
+
+#*************************************************************************
+sub UsageDie
+{
+    print <<__EOF;
+
+Usage: validate.pl sequence.faa mutations_list
+
+The mutations list is in the format:
+   ID orig_aa orig_resnum mutant_aa
+where orig_aa and mutant_aa are 3-letter code
+
+Output is in the format:
+   ID orig_resnum orig_aa corrected_resnum mutant_aa flag [message]
+where flag is either 'OK' (indicating that the corrected_resnum is
+correct with high confidence) or 'NO'
+If 'NO' and there is no message, then the residue could not be
+found. If there is a message, then it will be in the form 'Matches nnn'
+This indicates that after applying an offset, there was no match,
+but that a match was found with an offset of zero and nnn will
+then match the orig_resnum. The format allows for future expension
+where a second offset might be allowed.
+
+__EOF
+
+   exit 0;
+}
+@
+
+
+1.7
+log
+@Improved usage message
+@
+text
+@d1 1
+a1 1
+#!/usr/bin/perl -s
+@
+
+
+1.6
+log
+@Checks for negative out-of-bound access to arrays
+@
+text
+@d294 16
+a309 1
+validate.pl sequence.faa mutations_list
+@
+
+
+1.5
+log
+@Apparently all working now :)
+@
+text
+@d103 3
+a105 2
+        $ok = ($::throne{$$origseq_p[$i]} eq 
+               $$fullseq_p[$$resnum_p[$i]+$offset-1])?"OK\n":"NO";
+d151 2
+a152 1
+            $nmatch++ if(defined($$full_p[$$resnum_p[$j]+$i-1]) &&
+d178 4
+a181 5
+            if(($$resnum_p[$j]+$i-1) >= 0)
+            {
+                $nmatch++ if($$full_p[$$resnum_p[$j]+$i-1] eq
+                             $$key_p[$j]);
+            }
+@
+
+
+1.4
+log
+@Simplified the key array in the same way (this is the
+1-letter version of @@seq_orig
+@
+text
+@d152 1
+a152 1
+                          $$key_p[$j]));  ##HERE
+d155 1
+a155 1
+        if(($nmatch == $nmut - $outofrange) && ($nmut > $outofrange))
+d183 1
+a183 1
+        if($nmatch == $nmut - $outofrange)
+@
+
+
+1.3
+log
+@Simplified the reading of te original residues so they are
+just read into a simple array rather than indexed by residue
+number
+@
+text
+@d152 1
+a152 1
+                          $$key_p[$$resnum_p[$j]]));  ##HERE
+d179 1
+a179 1
+                             $$key_p[$$resnum_p[$j]]);
+d241 1
+a241 1
+            $seq_key[$resnum]  = $::throne{$aa_orig};
+a247 4
+    for($i=0; $i<@@seq_key; $i++)
+    {
+        $seq_key[$i] = 'X' if(!defined($seq_key[$i]));
+    }
+@
+
+
+1.2
+log
+@Still not working quite right
+P01009_107400.omim is corrupting $fullseq_p in PrintResults()
+@
+text
+@d1 1
+a1 1
+#!/usr/bin/perl -sd
+d103 1
+a103 1
+        $ok = ($::throne{$$origseq_p[$$resnum_p[$i]]} eq 
+d106 1
+a106 1
+                                $$origseq_p[$$resnum_p[$i]],
+d112 1
+a112 1
+            if($::throne{$$origseq_p[$$resnum_p[$i]]} eq
+a240 1
+            $seq_orig[$resnum] = $aa_orig;
+d242 1
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 1
+a1 1
+#!/usr/bin/perl -s
+d62 2
+a63 1
+   $fasta_seq, $resnum_p, $offset, $ok, $nmatch, $maxmatch);
+d73 1
+a73 1
+($origseq_p, $mutseq_p, $keyseq_p, $resnum_p) = ReadMutations();
+d79 1
+a79 1
+    PrintResults($origseq_p, $mutseq_p, $resnum_p, \@@fullseq, $offset);
+d83 2
+a84 1
+    if(($nmatch >= 5) && ($nmatch/$maxmatch > 0.5))
+d87 1
+a87 1
+        PrintResults($origseq_p, $mutseq_p, $resnum_p, \@@fullseq, $offset);
+d98 1
+a98 1
+    my($origseq_p, $mutseq_p, $resnum_p, $fullseq_p, $offset) = @@_;
+d105 1
+a105 1
+        printf "%d %s %d %s %s", $$resnum_p[$i],
+d108 1
+a108 1
+                                $$mutseq_p[$$resnum_p[$i]],
+d126 3
+a128 2
+    my($maxslide, $i, $j, $nmut, $bestoffset, $bestnmatch, $nmatch);
+    $bestnmatch = $bestoffset = 0;
+d132 13
+d150 3
+a152 2
+            $nmatch++ if($$full_p[$$resnum_p[$j]+$i-1] eq
+                         $$key_p[$$resnum_p[$j]]);
+d155 1
+a155 1
+        if($nmatch == $nmut)
+d176 5
+a180 2
+            $nmatch++ if($$full_p[$$resnum_p[$j]+$i-1] eq
+                         $$key_p[$$resnum_p[$j]]);
+d183 1
+a183 1
+        if($nmatch == $nmut)
+d230 2
+a231 1
+    my($resnum, $aa_orig, $aa_mut, @@seq_orig, @@seq_mut, @@seq_key, $i, @@resnums);
+d238 1
+a238 1
+            ($aa_orig, $resnum, $aa_mut) = split;
+a241 1
+            $seq_mut[$resnum]  = $aa_mut;
+d244 2
+d253 1
+a253 1
+    return(\@@seq_orig, \@@seq_mut, \@@seq_key, \@@resnums);
+@

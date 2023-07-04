@@ -1,0 +1,27 @@
+head	1.1;
+access;
+symbols;
+locks
+	martin:1.1; strict;
+comment	@# @;
+
+
+1.1
+date	2005.06.17.16.20.27;	author martin;	state Exp;
+branches;
+next	;
+
+
+desc
+@Script to make the web pages available again
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@\rm -f $1/unavailable
+cp -p $2/index.html.real $2/index.html
+@
