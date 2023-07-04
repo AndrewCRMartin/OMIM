@@ -55,7 +55,6 @@
 print "COPY omim_mutant FROM STDIN;\n";
 while(<>)
 {
-    chomp;
     if(/^\*RECORD\*/)
     {
         ProcessRecord(%record) if($record{'NO'});
@@ -74,7 +73,7 @@ while(<>)
     {
         if($mode ne '')
         {
-            $record{$mode} .= ' ' if(defined($record{$mode}));
+#            $record{$mode} .= ' ' if(defined($record{$mode}));
             $record{$mode} .= $_;
         }
     }
@@ -85,59 +84,79 @@ print "\\.\n";
 sub ProcessRecord
 {
     my(%record) = @_;
-    my(@words, $word, %mutations);
+    my(@words, $word, %mutations, $subrecord, $line, @lines, $newsub);
 
-    @words = split(/\s+/, $record{'AV'});
-    foreach $word(@words)
+    chomp $record{'NO'};
+
+    @lines = split(/\n/, $record{'AV'});
+    foreach $line (@lines)
     {
-        if($word =~ /([A-Z][A-Z][A-Z])(\d+)([A-Z][A-Z][A-Z])/)
+        if($line =~ /^\.(\d\d\d\d)/)
         {
-            $from = $1;
-            $res  = $2;
-            $to   = $3;
-            if((($from eq 'ALA') || 
-                ($from eq 'CYS') || 
-                ($from eq 'ASP') || 
-                ($from eq 'GLU') || 
-                ($from eq 'PHE') || 
-                ($from eq 'GLY') || 
-                ($from eq 'HIS') || 
-                ($from eq 'ILE') || 
-                ($from eq 'LYS') || 
-                ($from eq 'LEU') || 
-                ($from eq 'MET') || 
-                ($from eq 'ASN') || 
-                ($from eq 'PRO') || 
-                ($from eq 'GLN') || 
-                ($from eq 'ARG') || 
-                ($from eq 'SER') || 
-                ($from eq 'THR') || 
-                ($from eq 'VAL') || 
-                ($from eq 'TRP') || 
-                ($from eq 'TYR')) &&
-               (($to   eq 'ALA') ||
-                ($to   eq 'CYS') ||
-                ($to   eq 'ASP') ||
-                ($to   eq 'GLU') ||
-                ($to   eq 'PHE') ||
-                ($to   eq 'GLY') ||
-                ($to   eq 'HIS') ||
-                ($to   eq 'ILE') ||
-                ($to   eq 'LYS') ||
-                ($to   eq 'LEU') ||
-                ($to   eq 'MET') ||
-                ($to   eq 'ASN') ||
-                ($to   eq 'PRO') ||
-                ($to   eq 'GLN') ||
-                ($to   eq 'ARG') ||
-                ($to   eq 'SER') ||
-                ($to   eq 'THR') ||
-                ($to   eq 'VAL') ||
-                ($to   eq 'TRP') ||
-                ($to   eq 'TYR')))
+            $newsub = $1;
+            foreach $key (keys %mutations)
             {
-                $key  = "$from:$res:$to";
-                $mutations{$key} = 1;
+                ($from, $res, $to) = split(/:/, $key);
+                print "$record{'NO'}\t$subrecord\t$from\t$res\t$res\t$to\tf\n";
+            }
+            $subrecord = $newsub;
+            %mutations = ();
+        }
+        else
+        {
+            @words = split(/\s+/, $line);
+            foreach $word(@words)
+            {
+                if($word =~ /([A-Z][A-Z][A-Z])(\d+)([A-Z][A-Z][A-Z])/)
+                {
+                    $from = $1;
+                    $res  = $2;
+                    $to   = $3;
+                    if((($from eq 'ALA') || 
+                        ($from eq 'CYS') || 
+                        ($from eq 'ASP') || 
+                        ($from eq 'GLU') || 
+                        ($from eq 'PHE') || 
+                        ($from eq 'GLY') || 
+                        ($from eq 'HIS') || 
+                        ($from eq 'ILE') || 
+                        ($from eq 'LYS') || 
+                        ($from eq 'LEU') || 
+                        ($from eq 'MET') || 
+                        ($from eq 'ASN') || 
+                        ($from eq 'PRO') || 
+                        ($from eq 'GLN') || 
+                        ($from eq 'ARG') || 
+                        ($from eq 'SER') || 
+                        ($from eq 'THR') || 
+                        ($from eq 'VAL') || 
+                        ($from eq 'TRP') || 
+                        ($from eq 'TYR')) &&
+                       (($to   eq 'ALA') ||
+                        ($to   eq 'CYS') ||
+                        ($to   eq 'ASP') ||
+                        ($to   eq 'GLU') ||
+                        ($to   eq 'PHE') ||
+                        ($to   eq 'GLY') ||
+                        ($to   eq 'HIS') ||
+                        ($to   eq 'ILE') ||
+                        ($to   eq 'LYS') ||
+                        ($to   eq 'LEU') ||
+                        ($to   eq 'MET') ||
+                        ($to   eq 'ASN') ||
+                        ($to   eq 'PRO') ||
+                        ($to   eq 'GLN') ||
+                        ($to   eq 'ARG') ||
+                        ($to   eq 'SER') ||
+                        ($to   eq 'THR') ||
+                        ($to   eq 'VAL') ||
+                        ($to   eq 'TRP') ||
+                        ($to   eq 'TYR')))
+                    {
+                        $key  = "$from:$res:$to";
+                        $mutations{$key} = 1;
+                    }
+                }
             }
         }
     }
@@ -145,6 +164,6 @@ sub ProcessRecord
     foreach $key (keys %mutations)
     {
         ($from, $res, $to) = split(/:/, $key);
-        print "$record{'NO'}\t$from\t$res\t$to\n";
+        print "$record{'NO'}\t$subrecord\t$from\t$res\t$res\t$to\tn\n";
     }
 }
