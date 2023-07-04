@@ -164,6 +164,6 @@ sub ProcessRecord
     foreach $key (keys %mutations)
     {
         ($from, $res, $to) = split(/:/, $key);
-        print "$record{'NO'}\t$subrecord\t$from\t$res\t$res\t$to\tn\n";
+        print "$record{'NO'}\t$subrecord\t$from\t$res\t$res\t$to\tf\n";
     }
 }
