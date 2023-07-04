@@ -149,10 +149,10 @@ sub Slide
         {
             $nmatch++ if(defined($$full_p[$$resnum_p[$j]+$i-1]) &&
                          ($$full_p[$$resnum_p[$j]+$i-1] eq
-                          $$key_p[$j]));  ##HERE
+                          $$key_p[$j]));
         }
 
-        if(($nmatch == $nmut - $outofrange) && ($nmut > $outofrange))
+        if(($nmatch >= $nmut - $outofrange) && ($nmut > $outofrange))
         {
             if((($i>=(-1)) && ($i<=1)) || ($nmatch > 1))
             {
@@ -180,7 +180,7 @@ sub Slide
             }
         }
 
-        if($nmatch == $nmut - $outofrange)
+        if(($nmatch >= $nmut - $outofrange) && ($nmut > $outofrange))
         {
             if((($i>=(-1)) && ($i<=1)) || ($nmatch > 1))
             {
