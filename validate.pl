@@ -1,4 +1,4 @@
-#!/usr/bin/perl -s
+#!/usr/bin/perl -sd
 #*************************************************************************
 #
 #   Program:    
@@ -59,7 +59,8 @@
 use strict;
 
 my($keyseq_p, $mutseq_p, $origseq_p, $fasta_file, @fullseq,
-   $fasta_seq, $resnum_p, $offset, $ok, $nmatch, $maxmatch);
+   $fasta_seq, $resnum_p, $offset, $ok, $nmatch, $maxmatch,
+   $record_p);
 
 UsageDie() if(defined($::h));
 
@@ -69,20 +70,21 @@ $fasta_file = shift @ARGV;
 InitThrone();
 $fasta_seq = ReadFASTA($fasta_file);
 @fullseq = split(//, $fasta_seq);
-($origseq_p, $mutseq_p, $keyseq_p, $resnum_p) = ReadMutations();
+($origseq_p, $mutseq_p, $keyseq_p, $resnum_p, $record_p) = ReadMutations();
 
 ($offset, $ok, $nmatch, $maxmatch) = Slide(\@fullseq, $keyseq_p, $resnum_p);
 if($ok)
 {
     print "# Perfect match at offset: $offset\n";
-    PrintResults($origseq_p, $mutseq_p, $resnum_p, \@fullseq, $offset);
+    PrintResults($origseq_p, $mutseq_p, $resnum_p, $record_p, \@fullseq, $offset);
 }
 else
 {
-    if(($nmatch >= 5) && ($nmatch/$maxmatch > 0.5))
+    if((($offset == 0) && ($nmatch >= 2)) ||
+       (($nmatch >= 5) && ($nmatch/$maxmatch > 0.5)))
     {
         print "# Partial match at offset: $offset\n";
-        PrintResults($origseq_p, $mutseq_p, $resnum_p, \@fullseq, $offset);
+        PrintResults($origseq_p, $mutseq_p, $resnum_p, $record_p, \@fullseq, $offset);
     }
     else
     {
@@ -93,17 +95,17 @@ else
 #*************************************************************************
 sub PrintResults
 {
-    my($origseq_p, $mutseq_p, $resnum_p, $fullseq_p, $offset) = @_;
+    my($origseq_p, $mutseq_p, $resnum_p, $record_p, $fullseq_p, $offset) = @_;
     my($i, $ok);
 
     for($i=0; $i<scalar(@$resnum_p); $i++)
     {
         $ok = ($::throne{$$origseq_p[$$resnum_p[$i]]} eq 
                $$fullseq_p[$$resnum_p[$i]+$offset-1])?"OK\n":"NO";
-        printf "%d %s %d %s %s", $$resnum_p[$i],
+        printf "%s %d %s %d %s %s", $$record_p[$i], $$resnum_p[$i],
                                 $$origseq_p[$$resnum_p[$i]],
                                 $$resnum_p[$i] + $offset,
-                                $$mutseq_p[$$resnum_p[$i]],
+                                $$mutseq_p[$i],
                                 $ok;
         if($ok eq "NO")
         {
@@ -121,21 +123,36 @@ sub PrintResults
 sub Slide
 {
     my($full_p, $key_p, $resnum_p) = @_;
-    my($maxslide, $i, $j, $nmut, $bestoffset, $bestnmatch, $nmatch);
-    $bestnmatch = $bestoffset = 0;
+    my($maxslide, $i, $j, $nmut, $bestoffset, $bestnmatch, $nmatch,
+       $outofrange);
+    $bestnmatch = $bestoffset = $outofrange = 0;
     
     $maxslide = scalar(@$full_p);
     $nmut = scalar(@$resnum_p);
+
+    # Count how many of the mutations are out of range when we apply
+    # no slide
+    for($j=0; $j<$nmut; $j++)
+    {
+        $outofrange++ if(!defined($$full_p[$$resnum_p[$j]-1]));
+    }
+
+    if($outofrange == $nmut)
+    {
+        return(0,0,0,$nmut);
+    }
+
     for($i=0; $i<$maxslide; $i++)
     {
         $nmatch = 0;
         for($j=0; $j<$nmut; $j++)
         {
-            $nmatch++ if($$full_p[$$resnum_p[$j]+$i-1] eq
-                         $$key_p[$$resnum_p[$j]]);
+            $nmatch++ if(defined($$full_p[$$resnum_p[$j]+$i-1]) &&
+                         ($$full_p[$$resnum_p[$j]+$i-1] eq
+                          $$key_p[$$resnum_p[$j]]));  ##HERE
         }
 
-        if($nmatch == $nmut)
+        if(($nmatch == $nmut - $outofrange) && ($nmut > $outofrange))
         {
             if((($i>=(-1)) && ($i<=1)) || ($nmatch > 1))
             {
@@ -156,11 +173,14 @@ sub Slide
         $nmatch = 0;
         for($j=0; $j<$nmut; $j++)
         {
-            $nmatch++ if($$full_p[$$resnum_p[$j]+$i-1] eq
-                         $$key_p[$$resnum_p[$j]]);
+            if(($$resnum_p[$j]+$i-1) >= 0)
+            {
+                $nmatch++ if($$full_p[$$resnum_p[$j]+$i-1] eq
+                             $$key_p[$$resnum_p[$j]]);
+            }
         }
 
-        if($nmatch == $nmut)
+        if($nmatch == $nmut - $outofrange)
         {
             if((($i>=(-1)) && ($i<=1)) || ($nmatch > 1))
             {
@@ -207,20 +227,22 @@ sub InitThrone
 #*************************************************************************
 sub ReadMutations
 {
-    my($resnum, $aa_orig, $aa_mut, @seq_orig, @seq_mut, @seq_key, $i, @resnums);
+    my($resnum, $aa_orig, $aa_mut, @seq_orig, @seq_mut, @seq_key, $i);
+    my(@records, @resnums, $record);
     while(<>)
     {
         chomp;
         s/^\s+//;
         if(length)
         {
-            ($aa_orig, $resnum, $aa_mut) = split;
+            ($record, $aa_orig, $resnum, $aa_mut) = split;
             $aa_orig = "\U$aa_orig";
             $aa_mut  = "\U$aa_mut";
             $seq_orig[$resnum] = $aa_orig;
-            $seq_mut[$resnum]  = $aa_mut;
             $seq_key[$resnum]  = $::throne{$aa_orig};
             push @resnums, $resnum;
+            push @records, $record;
+            push @seq_mut, $aa_mut;
         }
     }
     for($i=0; $i<@seq_key; $i++)
@@ -228,7 +250,7 @@ sub ReadMutations
         $seq_key[$i] = 'X' if(!defined($seq_key[$i]));
     }
 
-    return(\@seq_orig, \@seq_mut, \@seq_key, \@resnums);
+    return(\@seq_orig, \@seq_mut, \@seq_key, \@resnums, \@records);
 }
 
 
