@@ -73,14 +73,15 @@ DoProcessing();
 #*************************************************************************
 sub DoProcessing
 {
-    my($sql, $sth, $rv, @results, $result, $omim);
+    my($sql, $sth, $rv, @results, $result, $omim, $ac);
 
-    $sql = "SELECT omim, record, ac, native, resnum, mutant, valid, resnum_orig FROM sws_mutant ORDER BY omim, record";
+    $sql = "SELECT omim, record, ac, native, resnum, mutant, valid, resnum_orig FROM sws_mutant ORDER BY omim, ac, record";
     $sth = $::dbh->prepare($sql);
     $rv = $sth->execute;
     if($rv)
     {
         $omim = "";
+        $ac   = "";
         print "<omim_mutations>\n" if(defined($::xml));
         while(@results = $sth->fetchrow_array)
         {
@@ -92,22 +93,30 @@ sub DoProcessing
             
             if(defined($::xml))
             {
+                if($results[2] ne $ac)
+                {
+                    print "      </sprot>\n" if($ac ne "");
+                }
                 if($results[0] ne $omim)
                 {
                     print "   </omim>\n" if($omim ne "");
                     $omim = $results[0];
                     print "   <omim id='$omim'>\n";
                 }
+                if($results[2] ne $ac)
+                {
+                    $ac = $results[2];
+                    print "      <sprot ac='$ac'>\n";
+                }
 
-                print  "      <record id='$results[1]'>\n";
-                print  "         <sprot_ac>$results[2]</sprot_ac>\n";
-                printf "         <omim_resnum correct='%s'>$results[7]</omim_resnum>\n",
+                print  "         <record id='$results[1]'>\n";
+                printf "            <omim_resnum correct='%s'>$results[7]</omim_resnum>\n",
                        ((($results[4] == $results[7])&&
                          ($results[6] ne 'f'))?'t':'f');
-                print  "         <resnum valid='$results[6]'>$results[4]</resnum>\n";
-                print  "         <native>$results[3]</native>\n";
-                print  "         <mutant>$results[5]</mutant>\n";
-                print  "      </record>\n";
+                print  "            <resnum valid='$results[6]'>$results[4]</resnum>\n";
+                print  "            <native>$results[3]</native>\n";
+                print  "            <mutant>$results[5]</mutant>\n";
+                print  "         </record>\n";
             }
             else
             {
@@ -122,6 +131,7 @@ sub DoProcessing
         }
         if(defined($::xml))
         {
+            print "      </sprot>\n" if($ac ne "");
             print "   </omim>\n" if($omim ne "");
             print "</omim_mutations>\n";
         }
