@@ -291,7 +291,22 @@ sub UsageDie
 {
     print <<__EOF;
 
-validate.pl sequence.faa mutations_list
+Usage: validate.pl sequence.faa mutations_list
+
+The mutations list is in the format:
+   ID orig_aa orig_resnum mutant_aa
+where orig_aa and mutant_aa are 3-letter code
+
+Output is in the format:
+   ID orig_resnum orig_aa corrected_resnum mutant_aa flag [message]
+where flag is either 'OK' (indicating that the corrected_resnum is
+correct with high confidence) or 'NO'
+If 'NO' and there is no message, then the residue could not be
+found. If there is a message, then it will be in the form 'Matches nnn'
+This indicates that after applying an offset, there was no match,
+but that a match was found with an offset of zero and nnn will
+then match the orig_resnum. The format allows for future expension
+where a second offset might be allowed.
 
 __EOF
 
