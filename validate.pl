@@ -100,8 +100,9 @@ sub PrintResults
 
     for($i=0; $i<scalar(@$resnum_p); $i++)
     {
-        $ok = ($::throne{$$origseq_p[$i]} eq 
-               $$fullseq_p[$$resnum_p[$i]+$offset-1])?"OK\n":"NO";
+        $ok = (($$resnum_p[$i]+$offset-1 >= 0) &&
+               ($::throne{$$origseq_p[$i]} eq 
+                $$fullseq_p[$$resnum_p[$i]+$offset-1]))?"OK\n":"NO";
         printf "%s %d %s %d %s %s", $$record_p[$i], $$resnum_p[$i],
                                 $$origseq_p[$i],
                                 $$resnum_p[$i] + $offset,
@@ -147,7 +148,8 @@ sub Slide
         $nmatch = 0;
         for($j=0; $j<$nmut; $j++)
         {
-            $nmatch++ if(defined($$full_p[$$resnum_p[$j]+$i-1]) &&
+            $nmatch++ if(($$resnum_p[$j]+$i-1 >= 0) &&
+                         defined($$full_p[$$resnum_p[$j]+$i-1]) &&
                          ($$full_p[$$resnum_p[$j]+$i-1] eq
                           $$key_p[$j]));
         }
@@ -173,11 +175,10 @@ sub Slide
         $nmatch = 0;
         for($j=0; $j<$nmut; $j++)
         {
-            if(($$resnum_p[$j]+$i-1) >= 0)
-            {
-                $nmatch++ if($$full_p[$$resnum_p[$j]+$i-1] eq
-                             $$key_p[$j]);
-            }
+            $nmatch++ if(($$resnum_p[$j]+$i-1 >= 0) &&
+                         defined($$full_p[$$resnum_p[$j]+$i-1]) &&
+                         ($$full_p[$$resnum_p[$j]+$i-1] eq
+                          $$key_p[$j]));
         }
 
         if(($nmatch >= $nmut - $outofrange) && ($nmut > $outofrange))
