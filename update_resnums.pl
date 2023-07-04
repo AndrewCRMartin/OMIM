@@ -73,7 +73,7 @@ while(<>)
             ($record, $resnum_orig, $native, $resnum, $mutant, $ok, $matches, $newres) = split;
             if($ok eq "OK")
             {
-                print "UPDATE omim_mutant SET resnum = $resnum, valid = 'y'
+                print "UPDATE omim_mutant SET resnum = $resnum, valid = 't'
                        WHERE omim = '$omim' AND 
                              record = '$record' AND 
                              native = '$native' AND
