@@ -33,7 +33,11 @@ CREATE VIEW sws_mutant AS
         FROM swsomim s, omim_mutant o
         WHERE s.omim = o.omim;
 
+CREATE VIEW sws_omim_mutant AS SELECT DISTINCT omim, record FROM sws_mutant;
+
+
 GRANT SELECT ON omim_description TO PUBLIC;
 GRANT SELECT ON omim_mutant      TO PUBLIC;
 GRANT SELECT ON sws_mutant       TO PUBLIC;
+GRANT SELECT ON sws_omim_mutant  TO PUBLIC;
 GRANT SELECT ON swsomim          TO PUBLIC;
