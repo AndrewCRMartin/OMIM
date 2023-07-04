@@ -41,6 +41,11 @@ build.sh - main shell script to run the required programs:
       validate.pl    - Validates the residue numbers of an entry
    update_resnums.pl - Updates the residue numbers in the database
    setdate.pl        - Puts the date in a file
+```
+
+The following two scripts are for accessing data:
+
+```
 getfasta.pl - Utility to grab a FASTA entry from the indexed file
 getomim.pl  - Utility to grab a mutation set from the database
 ```
