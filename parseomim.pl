@@ -4,8 +4,8 @@
 #   Program:    
 #   File:       
 #   
-#   Version:    
-#   Date:       
+#   Version:    V1.1
+#   Date:       10.12.09
 #   Function:   
 #   
 #   Copyright:  (c) UCL / Dr. Andrew C. R. Martin 2004
@@ -50,14 +50,17 @@
 #
 #   Revision History:
 #   =================
-#
+#   V1.0  06.12.06   Original   By: ACRM
+#   V1.1  10.12.09   Changed to INSERT each record rather than use COPY
+#                    to deal with OMIM entry 120120 which has two .0041
+#                    subrecords and broke the primary key. Using INSERT
+#                    will just reject the second entry...
 #*************************************************************************
 use strict;
 
 @::descriptions = ();
 my($description, %record, $mode, $junk);
 
-print "COPY omim_mutant FROM STDIN;\n";
 while(<>)
 {
     if(/^\*RECORD\*/)
@@ -78,20 +81,20 @@ while(<>)
     {
         if($mode ne '')
         {
-#            $record{$mode} .= ' ' if(defined($record{$mode}));
             $record{$mode} .= $_;
         }
     }
 }
 ProcessRecord(%record) if($record{'NO'});
-print "\\.\n";
 
-print "COPY omim_description FROM STDIN;\n";
 foreach $description (@::descriptions)
 {
-    print "$description\n";
+    $description =~ s/\'/\'\'/g;
+    $description =~ s/\s+$//g;
+    my @fields = split(/\t/, $description);
+    printf "INSERT INTO omim_description VALUES('%s','%s','%s');\n",
+           $fields[0], $fields[1], $fields[2];
 }
-print "\\.\n";
 
 
 sub ProcessRecord
@@ -108,11 +111,12 @@ sub ProcessRecord
         if($line =~ /^\.(\d\d\d\d)/)
         {
             $newsub = $1;
-            push @::descriptions, "$record{'NO'}\t$subrecord\t$info";
             foreach $key (keys %mutations)
             {
                 ($from, $res, $to) = split(/:/, $key);
-                print "$record{'NO'}\t$subrecord\t$from\t$res\t$res\t$to\tf\n";
+            push @::descriptions, "$record{'NO'}\t$subrecord\t$info";
+                printf "INSERT INTO omim_mutant VALUES('%s', '%s', '%s', %d, %d, '%s', 'f');\n",
+                       $record{'NO'}, $subrecord, $from, $res, $res, $to;
             }
             $subrecord = $newsub;
             %mutations = ();
@@ -191,6 +195,7 @@ sub ProcessRecord
     foreach $key (keys %mutations)
     {
         ($from, $res, $to) = split(/:/, $key);
-        print "$record{'NO'}\t$subrecord\t$from\t$res\t$res\t$to\tf\n";
+        printf "INSERT INTO omim_mutant VALUES('%s', '%s', '%s', %d, %d, '%s', 'f');\n",
+                $record{'NO'}, $subrecord, $from, $res, $res, $to;
     }
 }
