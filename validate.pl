@@ -1,4 +1,4 @@
-#!/usr/bin/perl -sd
+#!/usr/bin/perl -s
 #*************************************************************************
 #
 #   Program:    
@@ -100,16 +100,16 @@ sub PrintResults
 
     for($i=0; $i<scalar(@$resnum_p); $i++)
     {
-        $ok = ($::throne{$$origseq_p[$$resnum_p[$i]]} eq 
+        $ok = ($::throne{$$origseq_p[$i]} eq 
                $$fullseq_p[$$resnum_p[$i]+$offset-1])?"OK\n":"NO";
         printf "%s %d %s %d %s %s", $$record_p[$i], $$resnum_p[$i],
-                                $$origseq_p[$$resnum_p[$i]],
+                                $$origseq_p[$i],
                                 $$resnum_p[$i] + $offset,
                                 $$mutseq_p[$i],
                                 $ok;
         if($ok eq "NO")
         {
-            if($::throne{$$origseq_p[$$resnum_p[$i]]} eq
+            if($::throne{$$origseq_p[$i]} eq
                $$fullseq_p[$$resnum_p[$i]-1])
             {
                 print " Matches $$resnum_p[$i]";
@@ -238,8 +238,8 @@ sub ReadMutations
             ($record, $aa_orig, $resnum, $aa_mut) = split;
             $aa_orig = "\U$aa_orig";
             $aa_mut  = "\U$aa_mut";
-            $seq_orig[$resnum] = $aa_orig;
             $seq_key[$resnum]  = $::throne{$aa_orig};
+            push @seq_orig, $aa_orig;
             push @resnums, $resnum;
             push @records, $record;
             push @seq_mut, $aa_mut;
