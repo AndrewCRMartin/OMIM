@@ -93,19 +93,22 @@ sub DoProcessing
             
             if(defined($::xml))
             {
-                if($results[2] ne $ac)
-                {
-                    print "      </sprot>\n" if($ac ne "");
-                }
                 if($results[0] ne $omim)
                 {
-                    print "   </omim>\n" if($omim ne "");
+                    if($omim ne "")
+                    {
+                        print "      </sprot>\n";
+                        print "   </omim>\n";
+                    }
                     $omim = $results[0];
+                    $ac   = $results[2];
                     print "   <omim id='$omim'>\n";
+                    print "      <sprot ac='$ac'>\n";
                 }
-                if($results[2] ne $ac)
+                elsif($results[2] ne $ac)
                 {
-                    $ac = $results[2];
+                    $ac   = $results[2];
+                    print "      </sprot>\n";
                     print "      <sprot ac='$ac'>\n";
                 }
 
