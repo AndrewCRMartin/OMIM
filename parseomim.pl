@@ -52,6 +52,11 @@
 #   =================
 #
 #*************************************************************************
+use strict;
+
+@::descriptions = ();
+my($description, %record, $mode, $junk);
+
 print "COPY omim_mutant FROM STDIN;\n";
 while(<>)
 {
@@ -81,10 +86,19 @@ while(<>)
 ProcessRecord(%record) if($record{'NO'});
 print "\\.\n";
 
+print "COPY omim_description FROM STDIN;\n";
+foreach $description (@::descriptions)
+{
+    print "$description\n";
+}
+print "\\.\n";
+
+
 sub ProcessRecord
 {
     my(%record) = @_;
-    my(@words, $word, %mutations, $subrecord, $line, @lines, $newsub);
+    my(@words, $word, %mutations, $subrecord, $line, @lines);
+    my($newsub, $indata, $info, $key, $from, $res, $to);
 
     chomp $record{'NO'};
 
@@ -94,6 +108,7 @@ sub ProcessRecord
         if($line =~ /^\.(\d\d\d\d)/)
         {
             $newsub = $1;
+            push @::descriptions, "$record{'NO'}\t$subrecord\t$info";
             foreach $key (keys %mutations)
             {
                 ($from, $res, $to) = split(/:/, $key);
@@ -101,66 +116,78 @@ sub ProcessRecord
             }
             $subrecord = $newsub;
             %mutations = ();
+            $indata = 1;
+            $info = "";
         }
-        else
-        {
-            @words = split(/\s+/, $line);
-            foreach $word(@words)
+        elsif($indata)
+        {            
+            if(length($line) == 0)
             {
-                if($word =~ /([A-Z][A-Z][A-Z])(\d+)([A-Z][A-Z][A-Z])/)
+                $indata = 0;
+            }
+            else
+            {
+                $info .= $line . " ";
+                @words = split(/\s+/, $line);
+                foreach $word(@words)
                 {
-                    $from = $1;
-                    $res  = $2;
-                    $to   = $3;
-                    if((($from eq 'ALA') || 
-                        ($from eq 'CYS') || 
-                        ($from eq 'ASP') || 
-                        ($from eq 'GLU') || 
-                        ($from eq 'PHE') || 
-                        ($from eq 'GLY') || 
-                        ($from eq 'HIS') || 
-                        ($from eq 'ILE') || 
-                        ($from eq 'LYS') || 
-                        ($from eq 'LEU') || 
-                        ($from eq 'MET') || 
-                        ($from eq 'ASN') || 
-                        ($from eq 'PRO') || 
-                        ($from eq 'GLN') || 
-                        ($from eq 'ARG') || 
-                        ($from eq 'SER') || 
-                        ($from eq 'THR') || 
-                        ($from eq 'VAL') || 
-                        ($from eq 'TRP') || 
-                        ($from eq 'TYR')) &&
-                       (($to   eq 'ALA') ||
-                        ($to   eq 'CYS') ||
-                        ($to   eq 'ASP') ||
-                        ($to   eq 'GLU') ||
-                        ($to   eq 'PHE') ||
-                        ($to   eq 'GLY') ||
-                        ($to   eq 'HIS') ||
-                        ($to   eq 'ILE') ||
-                        ($to   eq 'LYS') ||
-                        ($to   eq 'LEU') ||
-                        ($to   eq 'MET') ||
-                        ($to   eq 'ASN') ||
-                        ($to   eq 'PRO') ||
-                        ($to   eq 'GLN') ||
-                        ($to   eq 'ARG') ||
-                        ($to   eq 'SER') ||
-                        ($to   eq 'THR') ||
-                        ($to   eq 'VAL') ||
-                        ($to   eq 'TRP') ||
-                        ($to   eq 'TYR')))
+                    if($word =~ /([A-Z][A-Z][A-Z])(\d+)([A-Z][A-Z][A-Z])/)
                     {
-                        $key  = "$from:$res:$to";
-                        $mutations{$key} = 1;
+                        $from = $1;
+                        $res  = $2;
+                        $to   = $3;
+                        if((($from eq 'ALA') || 
+                            ($from eq 'CYS') || 
+                            ($from eq 'ASP') || 
+                            ($from eq 'GLU') || 
+                            ($from eq 'PHE') || 
+                            ($from eq 'GLY') || 
+                            ($from eq 'HIS') || 
+                            ($from eq 'ILE') || 
+                            ($from eq 'LYS') || 
+                            ($from eq 'LEU') || 
+                            ($from eq 'MET') || 
+                            ($from eq 'ASN') || 
+                            ($from eq 'PRO') || 
+                            ($from eq 'GLN') || 
+                            ($from eq 'ARG') || 
+                            ($from eq 'SER') || 
+                            ($from eq 'THR') || 
+                            ($from eq 'VAL') || 
+                            ($from eq 'TRP') || 
+                            ($from eq 'TYR')) &&
+                           (($to   eq 'ALA') ||
+                            ($to   eq 'CYS') ||
+                            ($to   eq 'ASP') ||
+                            ($to   eq 'GLU') ||
+                            ($to   eq 'PHE') ||
+                            ($to   eq 'GLY') ||
+                            ($to   eq 'HIS') ||
+                            ($to   eq 'ILE') ||
+                            ($to   eq 'LYS') ||
+                            ($to   eq 'LEU') ||
+                            ($to   eq 'MET') ||
+                            ($to   eq 'ASN') ||
+                            ($to   eq 'PRO') ||
+                            ($to   eq 'GLN') ||
+                            ($to   eq 'ARG') ||
+                            ($to   eq 'SER') ||
+                            ($to   eq 'THR') ||
+                            ($to   eq 'VAL') ||
+                            ($to   eq 'TRP') ||
+                            ($to   eq 'TYR')))
+                        {
+                            $key  = "$from:$res:$to";
+                            $mutations{$key} = 1;
+                        }
                     }
                 }
             }
         }
     }
 
+    # Print the last one...
+    push @::descriptions, "$record{'NO'}\t$subrecord\t$info";
     foreach $key (keys %mutations)
     {
         ($from, $res, $to) = split(/:/, $key);
