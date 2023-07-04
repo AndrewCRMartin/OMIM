@@ -1,4 +1,4 @@
-#!/acrm/usr/local/bin/perl
+#!/usr/bin/perl
 #*************************************************************************
 #
 #   Program:    
@@ -54,18 +54,18 @@
 #   11.07.11 Updates to external links
 #
 #*************************************************************************
-require ACRMPerlVars;
+#require ACRMPerlVars;
 $::dbname      = "omim";
-$::dbhost      = $ACRMPerlVars::pghost;
-$::psql        = "/acrm/usr/local/bin/psql -h $::dbhost -tqc";
-$::unavailable = "/acrm/www/cgi-bin/omim/unavailable";
+$::dbhost      = "db";
+$::psql        = "/usr/bin/psql -h $::dbhost -tqc";
+$::unavailable = "./unavailable";
 #$::omimlink    = "http://www.ncbi.nlm.nih.gov/entrez/dispomim.cgi?id=";
 $::omimlink    = "http://omim.org/entry/";
 #$::sprotlink   = "http://us.expasy.org/uniprot/";
 $::sprotlink   = "http://www.uniprot.org/uniprot/";
-$::pdbswslink  = "/cgi-bin/pdbsws/query.pl?qtype=ac&id=";
-$::lookupomim  = "/cgi-bin/omim/omim.pl?sortby=omim&omim=";
-$::lookupsprot = "/cgi-bin/omim/omim.pl?sortby=omim&ac=";
+$::pdbswslink  = "../pdbsws/query.cgi?qtype=ac&id=";
+$::lookupomim  = "./omim.cgi?sortby=omim&omim=";
+$::lookupsprot = "./omim.cgi?sortby=omim&ac=";
 $::colour_ok   = "#FFFFFF";
 $::colour_warn = "#FFFFAA";
 $::colour_bad  = "#FFAAAA";

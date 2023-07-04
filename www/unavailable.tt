@@ -1,0 +1,20 @@
+[% INCLUDE "header.tt" %]
+[% INCLUDE "main_menu.tt"
+   mutations = " id='mcurrent'"
+%]
+[% INCLUDE omim_menu.tt 
+   index = " id='current'"
+%]
+
+<section id="content">
+  <div class="container">
+
+    <h1>OMIM Mutations Search</h1>
+
+    <p class='warning'>The OMIM mutation search is unavailable while the data are updated.<br />
+      Please refresh this frame in 5 minutes to try again.
+    </p>
+
+  </div>
+</section>
+[% INCLUDE "footer.tt" %]

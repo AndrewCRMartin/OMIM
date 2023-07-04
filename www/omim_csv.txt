@@ -1,0 +1,26 @@
+The comma-separated value format contains the following columns:
+
+* OMIM ID The OMIM identifier
+* OMIM Record The allelic variant record number
+* UniProt/SwissProt accession The accession number in
+  SwissProt. Note that it is possible for more than one accession
+  number to match the same OMIM record. In this case the data will
+  appear again for each SwissProt accession. It is of course
+  possible that the residue numbering may be different with
+  respect to different SwissProt entries. One SwissProt accession
+  may also link to more than one OMIM entry, though it is unlikely
+  that there will be more than one OMIM entry with allelic
+  variation information.
+* Native residue The unmutated (native) amino acid from OMIM
+* Residue number This is our corrected residue number with respect
+  to the SwissProt entry. This should only be trusted of the Valid
+  field (see below) is 't' or, at your discretion, '?'.
+* Mutant residue The mutated amino acid from OMIM
+* Valid Validation status: 't' indicates that the Residue number
+  is definitely correct; 'f' indicates that the Residue number is
+  definitely wrong - we were unable to find the native residues at
+  the correct locations even when applying an offset; '?'
+  indicates that the Residue number is 'probably correct' (see
+  above).
+* OMIM Residue number This is the residue number provided in the
+  OMIM record.

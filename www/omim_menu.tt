@@ -1,0 +1,9 @@
+<div id='submenu'>
+<ul>
+<li[% mutations %]><a href='[%root%]/mutations/'>Mutations home</a></li>
+<li[% index %]><a href='index.html'>OMIM</a></li>
+<li[% about %]><a href='about.html'>About</a></li>
+<li[% stats %]><a href='stats.cgi'>Stats</a></li>
+</ul>
+</div>
+<div id='subpage'>

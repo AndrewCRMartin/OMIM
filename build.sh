@@ -1,16 +1,5 @@
 #!/bin/bash
-sprot=/acrm/data/swissprot/full/uniprot_sprot.dat
-fasta=/acrm/data/swissprot/full/uniprot_sprot.fasta
-idx=/tmp/sprot.idx
-dbname=omim
-dbhost=acrm8
-validate=/home/bsm/martin/SAAP/omim/validate.pl
-htmldir=/acrm/www/html/omim
-cgidir=/acrm/www/cgi-bin/omim
-omimdatadir=/acrm/data/omim
-tmpdir=/acrm/data/tmp
-omimfile=omim.txt.Z
-omimurl=ftp://ftp.ncbi.nih.gov/repository/OMIM/$omimfile
+. ./config.sh
 
 # If called with "-get" then grab the file
 param=$1

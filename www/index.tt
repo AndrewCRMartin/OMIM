@@ -1,0 +1,101 @@
+[% INCLUDE "header.tt" %]
+[% INCLUDE "main_menu.tt"
+   mutations = " id='mcurrent'"
+%]
+
+<section id="inner-headline">
+  <div class="container">
+    <div class="row">
+      <div class="span12">
+        <div class="inner-heading">
+          <ul class="breadcrumb">
+            <li><a href="[%root%]/">Home</a> <i class="icon-angle-right"></i></li>
+            <li><a href="[%root%]/servers/">Other servers</a> <i class="icon-angle-right"></i></li>
+            <li class="active">OMIM</li>
+          </ul>
+          <h2>OMIM Mutations Search</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="content">
+  <div class="container">
+
+    <p class='lead'>Simple search of OMIM mis-sense mutation data
+      providing links to validated residue numbers in
+      UniProtKB/SwissProt.</p>
+
+    <p class='pullquote-left'><span class='text-info'><b>PLEASE
+      NOTE:</b> The OMIM data on which this page is based are the
+      dataset from 22nd February, 2011 - the last public release of
+      OMIM as archived at the NCBI. OMIM have since changed their
+      licensing conditions meaning that we can no longer update this
+      resource.</span>
+    </p>
+
+    <div class='row'>
+      <div class='blankline20'></div>
+    </div>
+    
+    <h3>Search</h3>
+
+    <div class='myform'>
+      <form action="./omim.cgi" method='post'>
+      
+        <table>
+          <tr><td>OMIM ID:</td>
+            <td><input name='omim' type='text' size='10' /></td>
+            <td><i>e.g. 102560, 107300, 109270</i></td>
+          </tr>
+          <tr><td>SwissProt Accession:</td>
+            <td><input name='ac' type='text' size='10' /></td>
+            <td><i>e.g. P02708, P49768, P02649</i></td>
+          </tr>
+          <tr><td>OMIM Phenotype information:</td>
+            <td><input name='pheno' type='text' size='40' /></td>
+            <td><i>e.g. G6PD, OTC, diabetes, albumin, alzheimer</i></td>
+          </tr>
+        </table>
+        
+        <p>Sort by: 
+          <input type='radio' name='sortby' value='omim' checked='checked' />OMIM
+          <input type='radio' name='sortby' value='sprot' />SwissProt/residue
+        </p>
+      
+        <p><input type='submit' value='Search' />&nbsp;<input type='reset' value='Clear' /></p>
+      </form>
+    </div>
+      
+    <hr />
+    
+    <h3>Download</h3>
+    
+    <p>Download the complete validated mapping:</p>
+    <p>
+      <a href='omim_sprot.xml' class='btn btn-large btn-success'><i class='icon-download'></i> XML</a> 
+      <a href='omim_sprot.csv' class='btn btn-large btn-success'><i class='icon-download'></i> CSV</a>
+    </p>
+    
+    <hr />
+    
+    <h3>Information</h3>
+    
+    <p>
+      <a class='btn btn-medium btn-theme'
+         href='about.html'><i class='icon-link'></i> About
+      </a>
+      <a class='btn btn-medium btn-theme'
+         href='stats.cgi'><i class='icon-link'></i> Statistics
+      </a>
+    </p>
+
+    <div class='row'>
+      <div class='blankline20'></div>
+    </div>
+
+  </div>
+</section>
+
+[% INCLUDE "footer.tt" %]

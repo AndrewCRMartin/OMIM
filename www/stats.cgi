@@ -1,4 +1,4 @@
-#!/acrm/usr/local/bin/perl
+#!/usr/bin/perl
 #*************************************************************************
 #
 #   Program:    
@@ -53,7 +53,7 @@
 #
 #*************************************************************************
 # Packages to use
-require ACRMPerlVars;
+#require ACRMPerlVars;
 use Template;
 use CGI;
 use DBI;
@@ -64,8 +64,8 @@ $|=1;
 
 # Default variables
 $::dbname    = "omim" if(!defined($::dbname));
-$::datefile  = "/acrm/www/html/omim/datefile.txt" if(!defined($::datefile));
-$::dbhost    = $ACRMPerlVars::pghost if(!defined($::dbhost));
+$::datefile  = "./datefile.txt" if(!defined($::datefile));
+$::dbhost    = "db" if(!defined($::dbhost));
 
 # Connect to the database
 $::dbh  = DBI->connect("dbi:Pg:dbname=$::dbname;host=$::dbhost");
@@ -162,23 +162,42 @@ sub ProcessTemplate
     print $cgi->header();
 
     my $tt = Template->new({
-        INCLUDE_PATH => '.:/acrm/www/html'
+        INCLUDE_PATH => '.:/serv/www/html_bioinf'
         });
     $tt->process(\*DATA, \%::vars) || die $tt->error();
 }
 
 __DATA__
-[% INCLUDE "header.tt" %]
+[% INCLUDE "header.tt"
+   serversactive="active"
+ %]
 [% INCLUDE "main_menu.tt" 
    mutations = " id='mcurrent'"
 %]
-[% INCLUDE "omim/omim_menu.tt"
-   stats = " id='current'"
-%]
 
-<h1>OMIM Statistics</h1>
+<section id="inner-headline">
+  <div class="container">
+    <div class="row">
+      <div class="span12">
+        <div class="inner-heading">
+          <ul class="breadcrumb">
+            <li><a href="[%root%]/">Home</a> <i class="icon-angle-right"></i></li>
+            <li><a href="[%root%]/servers/">Other servers</a> <i class="icon-angle-right"></i></li>
+            <li><a href="[%root%]/servers/omim/">OMIM</a> <i class="icon-angle-right"></i></li>
+            <li class="active">Statistics</li>
+          </ul>
+          <h2>OMIM Statistics</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-<p>OMIM database last updated [% date %]</p>
+
+<section id="content">
+<div class="container">
+
+<p class='text-info'>OMIM database last updated <b>[%date%]</b></p>
 
 <h3>Overall OMIM data</h3>
 <p>Total number of OMIM entries with allelic variant records: [% n_omim_total %]</p>
@@ -187,7 +206,7 @@ __DATA__
 This represents [% n_mutant %] mutations ([% n_mutant_perc %]%)</p>
 
 <h3>Of the OMIM entries linked to SwissProt:</h3>
-<table>
+<table class='table table-striped'>
 <tr>
    <td>Validated (Class A) mutations:</td>
    <td>[% n_class_a %] ([% n_class_a_perc %]%)</td>
@@ -210,6 +229,19 @@ These came from [% n_omim_offset %] OMIM entries ([% n_omim_offset_perc %]%).</p
 
 <p>In total, [% n_omim_error %] OMIM entries linked to SwissProt ([% n_omim_error_perc %]%) 
 contain errors or inconsistencies.</p>
+
+    <p>
+      <a href='./' class='btn btn-large
+         btn-info'><i class='icon-reply'></i> Back
+      </a>
+    </p>
+
+    <div class='row'>
+      <div class='blankline20'></div>
+    </div>
+
+</div>
+</section>
 
 [% INCLUDE "footer.tt" %]
 

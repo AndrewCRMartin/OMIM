@@ -1,0 +1,149 @@
+[% INCLUDE "header.tt" %]
+[% INCLUDE "main_menu.tt"
+   mutations = " id='mcurrent'"
+%]
+
+<section id="inner-headline">
+  <div class="container">
+    <div class="row">
+      <div class="span12">
+        <div class="inner-heading">
+          <ul class="breadcrumb">
+            <li><a href="[%root%]/">Home</a> <i class="icon-angle-right"></i></li>
+            <li><a href="[%root%]/servers/">Other servers</a> <i class="icon-angle-right"></i></li>
+            <li><a href="[%root%]/servers/omim/">OMIM</a> <i class="icon-angle-right"></i></li>
+            <li class="active">Aboud</li>
+          </ul>
+          <h2>OMIM - About...</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="content">
+  <div class="container">
+
+    <p>OMIM provides information on 'allelic variants' (mutations), but
+      does not provide cross references to SwissProt.</p>
+    
+    <p>In addition, there are frequently problems with the numbering used
+      in OMIM. Often the residue numbers used do not correspond to the
+      residue number in the corresponding SwissProt file. Generally,
+      applying a constant offset to all the residue numbers will correct
+      this, but in about 8% of entries, the correct residue numbers cannot
+      be found in this way and for about 1% of the data, there is a clear
+      change in the numbering scheme within the OMIM entry (although there
+      is no parsable annotation to indicate this is the case). These are
+      validated as 'probably correct' (see below).</p>
+
+    <p>On the other hand, SwissProt provides cross-links to mutation data,
+      but the source of these data are not available from the SwissProt file
+      (though links on the web provide these data), making it difficult to
+      identify disease-related mutations rather than SNPs.</p>
+    
+    <p>This server extracts mis-sense mutation data and OMIM reference
+      numbers from OMIM and takes the sequence data, OMIM cross-reference
+      and accession code from SwissProt. The data are linked using a
+      PostgreSQL relational database. The residue numbers from OMIM are then
+      validated against the sequence from SwissProt and the results of the
+      validation are written back into the database.</p>
+
+    <hr />
+    
+    <h3>'Probably correct' residue numbers</h3>
+
+    <p>'Probably correct' residue numbers are those where a majority of
+      residues in the OMIM record are found by applying an offset (let's say
+      of 20 residues). However a subset are not found using that offset. If
+      any of this subset then matches with an offset of zero, we assume that
+      the numbering scheme in OMIM has changed.</p>
+    
+    <hr />
+
+    <h3>File formats</h3>
+    
+    <h4>XML</h4>
+    
+    <p>The XML file is pretty-much self-documenting. An
+      <tt>&lt;omim&gt;</tt> tag with an <tt>id</tt> attribute corresponds to
+      an OMIM identifier. This contains one <tt>&lt;sprot&gt;</tt> tag whose
+      <tt>ac</tt> attribute indicates the UniProtKB/SwissProt accession code. This tag
+      contains one or more <tt>&lt;record&gt;</tt> tags which correspond to
+      the OMIM allelic variant records.</p>
+    
+    <p> Within each <tt>&lt;record&gt;</tt> tag, we indicate the residue
+      number as it appeared in OMIM using the <tt>&lt;omim_resnum&gt;</tt>
+      tag. This has a <tt>correct</tt> attribute to indicate whether we have
+      validated this residue number as correct with respect to the SwissProt
+      sequence. (The <tt>correct</tt> attribute is either <tt>'t'</tt> for
+      true or <tt>'f'</tt> for false.)  The <tt>&lt;resnum&gt;</tt> tag
+      indicates our validated residue number with respect to the SwissProt
+      sequence. The <tt>valid</tt> attribute indicates that this number is
+      definitely correct (<tt>'t'</tt> for true), definitely incorrect
+      (<tt>'f'</tt> for false - indicates we were unable to find the
+      residues indicated in OMIM), or probably correct (<tt>'?'</tt> - see
+      above).</p>
+    
+    <p>Finally within the record tag, we indicate the native and mutant
+      residues with the <tt>&lt;native&gt;</tt> and <tt>&lt;mutant&gt;</tt>
+      tags and provide a <tt>&lt;description&gt;</tt> tag with the brief
+      descriptive title taken from the OMIM data.</p>
+    
+    <p>Download the <a href='omim_xml.dtd'>DTD</a></p>
+    
+    <h4>CSV</h4>
+    
+    <p>The comma-separated value format contains the following
+      columns:</p>
+    
+    <ul>
+      <li><b>OMIM ID</b> The OMIM identifier</li>
+      <li><b>OMIM Record</b> The allelic variant record number</li>
+      <li><b>UniProt/SwissProt accession</b> The accession number in
+        SwissProt. Note that it is possible for more than one accession number
+        to match the same OMIM record. In this case the data will appear again
+        for each SwissProt accession. It is of course possible that the
+        residue numbering may be different with respect to different SwissProt
+        entries. One SwissProt accession may also link to more than one OMIM
+        entry, though it is unlikely that there will be more than one OMIM
+        entry with allelic variation information.</li>
+      <li><b>Native residue</b> The unmutated (native) amino acid from OMIM</li>
+      <li><b>Residue number</b> This is our corrected residue number with
+        respect to the SwissProt entry. This should only be trusted of the
+        <b>Valid</b> field (see below) is <tt>'t'</tt> or, at your discretion,
+        <tt>'?'</tt>.</li>
+      <li><b>Mutant residue</b> The mutated amino acid from OMIM</li>
+      <li><b>Valid</b> Validation status: <tt>'t'</tt> indicates that the
+        <b>Residue number</b> is definitely correct; <tt>'f'</tt> indicates
+        that the <b>Residue number</b> is definitely wrong - we were unable to
+        find the native residues at the correct locations even when applying
+        an offset; <tt>'?'</tt> indicates that the <b>Residue number</b> is
+        'probably correct' (see above).</li>
+      <li><b>OMIM Residue number</b> This is the residue number provided in
+        the OMIM record.</li>
+      <li><b>OMIM Description</b> The brief descriptive title from the OMIM record.</li>
+    </ul>
+    
+    <hr />
+    
+    <h3>Draft paper</h3>
+    
+    <p>You can download a draft of <a href='draft_paper.pdf'>paper</a>.</p>
+
+    <hr />
+    
+    <p>
+      <a href='./' class='btn btn-large
+         btn-info'><i class='icon-reply'></i> Back
+      </a>
+    </p>
+
+    <div class='row'>
+      <div class='blankline20'></div>
+    </div>
+    
+  </div>
+</section>
+
+[% INCLUDE "footer.tt" %]

@@ -1,0 +1,22 @@
+<!ELEMENT omim_mutations ( omim+ ) >
+
+<!ELEMENT omim ( sprot ) >
+<!ATTLIST omim id NMTOKEN #REQUIRED >
+
+<!ELEMENT sprot ( record+ ) >
+<!ATTLIST sprot ac ID #REQUIRED >
+
+<!ELEMENT record ( omim_resnum, resnum, native, mutant, description ) >
+<!ATTLIST record id NMTOKEN #REQUIRED >
+
+<!ELEMENT omim_resnum ( #PCDATA ) >
+<!ATTLIST omim_resnum correct ( f | t ) #REQUIRED >
+
+<!ELEMENT resnum ( #PCDATA ) >
+<!ATTLIST resnum valid CDATA #REQUIRED >
+
+<!ELEMENT native ( #PCDATA ) >
+
+<!ELEMENT mutant ( #PCDATA ) >
+
+<!ELEMENT description ( #PCDATA ) >
