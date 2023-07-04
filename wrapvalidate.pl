@@ -74,7 +74,7 @@ die "Could not connect to database: $DNI::errstr" if(!$::dbh);
 
 # Set defaults
 $tmp_fasta = "/tmp/omim_fasta_$$.faa";
-$tmp_mutant = "/tmp/omim_mutant_$$.faa";
+$tmp_mutant = "/tmp/omim_mutant_$$.omim";
 
 # Get the SwissProt FASTA index information and connect to it
 $fname = shift(@ARGV);
@@ -121,6 +121,7 @@ foreach $ac (@acs)
 dbmclose %sprot_tell;
 close FILE;
 unlink $tmp_fasta if(-e $tmp_fasta);
+unlink $tmp_mutant if(-e $tmp_mutant);
 
 #*************************************************************************
 sub GetMutantList
