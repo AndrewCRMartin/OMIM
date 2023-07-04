@@ -28,7 +28,7 @@ The files you need to obtain are:
 - https://ftp.uniprot.org/pub/databases/uniprot/knowledgebase/complete/uniprot_sprot.faa.gz
 - https://ftp.ncbi.nih.gov/repository/OMIM/ARCHIVE/omim.txt.Z
 
-and all of these must be uncompressed.
+**and all of these must be uncompressed.**
 
 The `build.sh` script does the following:
 
